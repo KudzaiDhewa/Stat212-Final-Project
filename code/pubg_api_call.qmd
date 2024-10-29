@@ -10,8 +10,9 @@ editor: visual
 # 
 # library(devtools)
 # library(rPUBG)
-library(httr)
-library(jsonlite)
+library(httr) # making HTTP requests to web APIs and web servers
+library(jsonlite) #to read json files
+library(urltools)
 ```
 
 API key: eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJqdGkiOiIyOWUyNTdmMC03MjBhLTAxM2QtNjBmNS0xNjVmNmJlZjNhYmMiLCJpc3MiOiJnYW1lbG9ja2VyIiwiaWF0IjoxNzI5NTM2MTU1LCJwdWIiOiJibHVlaG9sZSIsInRpdGxlIjoicHViZyIsImFwcCI6Ii1mNzhjOGRkOC03ODAxLTRlZGUtYjJhNC0zMTM4YTc4MDhmMWUifQ.kE-hg_GLzdV-kieHrtv0w7jEG0WhFknHbZ8VNlrujyE
@@ -19,6 +20,8 @@ API key: eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJqdGkiOiIyOWUyNTdmMC03MjBhLTAxM2
 ```{r}
 api_key <- "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJqdGkiOiJlNjI0NjI4MC03MjMyLTAxM2QtOGU4MS0yMjViNDYzNmQwYzgiLCJpc3MiOiJnYW1lbG9ja2VyIiwiaWF0IjoxNzI5NTUzNjUxLCJwdWIiOiJibHVlaG9sZSIsInRpdGxlIjoicHViZyIsImFwcCI6InB1YmdfYXBpXzIifQ.TPRaU-Yrrai0kza1Wb8-Kg8gBIy__hz37cStm24B1xI"
 ```
+
+# GETTING A LIST OF SEASONS
 
 ```{r}
 # Define the endpoint for seasons
@@ -40,6 +43,7 @@ if (status_code(response) == 200) {
     print(paste("Error:", status_code(response)))
     print(content(response, as = "text"))
 }
+
 
 ```
 
@@ -69,6 +73,8 @@ if (status_code(response) == 200) {
 players_data$data$id
 ```
 
+# GETTING SAMPLE MATCHES (1K)
+
 ```{r}
 url <- "https://api.pubg.com/shards/steam/samples"
 
@@ -90,6 +96,8 @@ if (status_code(response) == 200) {
 }
 
 ```
+
+# GETTING PLAYERS FOR A MATCH
 
 ```{r}
 
@@ -135,5 +143,33 @@ match %>%
 ```
 
 ```{r}
-View(roster$attributes)
+View(roster$attributes) 
+```
+
+# GETTING LIFETIME STATS FOR A PLAYER
+
+```{r}
+url <- "https://api.pubg.com/shards/steam/players/account.cfbdfcdb42324279a9f37d62c201c2ae/seasons/lifetime"
+
+# Make the GET request
+response <- GET(url, add_headers(`Authorization` = paste("Bearer", api_key),
+                                  `Accept` = "application/vnd.api+json"))
+
+# Check for a successful response
+if (status_code(response) == 200) {
+    # Parse the JSON response
+    lifetime_data <- fromJSON(content(response, as = "text"))
+    
+    # Print or process the seasons data
+    print(lifetime_data)
+} else {
+    # Print the error message
+    print(paste("Error:", status_code(response)))
+    print(content(response, as = "text"))
+}
+
+```
+
+```{r}
+data.frame(lifetime_data$data$attributes$gameModeStats$squad)
 ```
