@@ -13,9 +13,8 @@ editor: visual
 library(httr) # making HTTP requests to web APIs and web servers
 library(jsonlite) #to read json files
 library(urltools)
+library(tidyverse)
 ```
-
-API key: eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJqdGkiOiIyOWUyNTdmMC03MjBhLTAxM2QtNjBmNS0xNjVmNmJlZjNhYmMiLCJpc3MiOiJnYW1lbG9ja2VyIiwiaWF0IjoxNzI5NTM2MTU1LCJwdWIiOiJibHVlaG9sZSIsInRpdGxlIjoicHViZyIsImFwcCI6Ii1mNzhjOGRkOC03ODAxLTRlZGUtYjJhNC0zMTM4YTc4MDhmMWUifQ.kE-hg_GLzdV-kieHrtv0w7jEG0WhFknHbZ8VNlrujyE
 
 ```{r}
 api_key <- "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJqdGkiOiJlNjI0NjI4MC03MjMyLTAxM2QtOGU4MS0yMjViNDYzNmQwYzgiLCJpc3MiOiJnYW1lbG9ja2VyIiwiaWF0IjoxNzI5NTUzNjUxLCJwdWIiOiJibHVlaG9sZSIsInRpdGxlIjoicHViZyIsImFwcCI6InB1YmdfYXBpXzIifQ.TPRaU-Yrrai0kza1Wb8-Kg8gBIy__hz37cStm24B1xI"
@@ -95,6 +94,7 @@ if (status_code(response) == 200) {
     print(content(response, as = "text"))
 }
 
+
 ```
 
 # GETTING PLAYERS FOR A MATCH
@@ -120,11 +120,6 @@ if (status_code(response) == 200) {
     print(content(response, as = "text"))
 }
 
-
-```
-
-```{r}
-library(tidyverse)
 ```
 
 ```{r}
@@ -134,8 +129,6 @@ match <- match_data$included$attributes$stats
 ```{r}
 match %>% 
   View()
-  
-  
 ```
 
 ```{r}
@@ -170,6 +163,36 @@ if (status_code(response) == 200) {
 
 ```
 
+# WEAPON MASTERY
+
 ```{r}
-data.frame(lifetime_data$data$attributes$gameModeStats$squad)
+get_data <- function (url){
+  
+  # Make the GET request
+response <- GET(url, add_headers(`Authorization` = paste("Bearer", api_key),
+                                  `Accept` = "application/vnd.api+json"))
+
+# Check for a successful response
+if (status_code(response) == 200) {
+    # Parse the JSON response
+    data <- fromJSON(content(response, as = "text"))
+    
+    # Print or process the seasons data
+    return(data)
+} else {
+    # Print the error message
+    print(paste("Error:", status_code(response)))
+    print(content(response, as = "text"))
+}
+}
+```
+
+```{r}
+url <- "https://api.pubg.com/shards/steam/players/account.cfbdfcdb42324279a9f37d62c201c2ae/weapon_mastery"
+
+weapon <- get_data(url)
+```
+
+```{r}
+data.frame(weapon$data$attributes$weaponSummaries$Item_Weapon_AK47_C$StatsTotal)
 ```
