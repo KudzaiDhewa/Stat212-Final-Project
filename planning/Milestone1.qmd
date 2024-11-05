@@ -1,26 +1,89 @@
 ---
-title: "Milestone1"
+title: "milestone1"
 format: html
 editor: visual
+author: Hanna, Tam, Kudzai
 ---
 
-## Quarto
+<br>
 
-Quarto enables you to weave together content and executable code into a finished document. To learn more about Quarto see <https://quarto.org>.
+Names: Hanna, Tam, Kudzai
 
-## Running Code
+Project Topic: Predicting PUBG Player Success Based on Key Metrics and Playstyle Factors
 
-When you click the **Render** button a document will be generated that includes both content and the output of embedded code. You can embed code like this:
+Question: Can we predict a player’s success in terms of key performance indicators like kill count, win probability, and survival time, by analyzing mastery levels, playstyle, and historical performance data?
 
-```{r}
-1 + 1
-```
+Data: <https://documentation.pubg.com/en/players-endpoint.html>
 
-You can add options to executable code like this
+Data Context: The PUBG Game Data Service is designed to implement the required features of the JSON-API specification. The data returned from each of the API’s endpoint is in a JSON-API format.
 
-```{r}
-#| echo: false
-2 * 2
-```
+Data Codebook:
 
-The `echo: false` option disables the printing of code (only output is displayed).
+Important variables:
+
+Players
+
+type : Identifier for this object type ("player")
+
+id: Player ID
+
+matches: A list of match IDs
+
+Weapon mastery
+
+type: Identifier for this object type ("weaponMasterySummary")
+
+id: Player ID (also known as account ID)
+
+weaponSummaries: The weapon summary for each weapon
+
+latestMatchId: The match ID of the last completed match that was played
+
+Weapon Summary
+
+\$Item_Weapon: The weapon summary for each weapon
+
+XPTotal: The total amount of XP earned for this weapon
+
+LevelCurrent: The current level of this weapon
+
+TierCurrent: The current tier of this weapon
+
+StatsTotal: The weapon mastery stats for this weapon
+
+OfficialStatsTotal: The weapon mastery stats for this weapon for games played in Official mode only
+
+CompetitiveStatsTotal: The weapon mastery stats for this weapon for games played in Competitive mode only
+
+Survival Mastery
+
+type: Identifier for this object type ("survivalMasterySummary")
+
+id: Player ID (also known as account ID)
+
+xp: Survival Mastery experience points
+
+tier: Survival Mastery tier
+
+level: Survival Mastery level
+
+totalMatchesPlayed: Number of matches played that count toward Survival Mastery
+
+latestMatchId : The match ID of the last completed match that was played
+
+stats: Contains the following variables: airDropsCalled, damageDealt, damageTaken, distanceBySwimming, distanceByVehicle, distanceOnFoot, distanceTotal, healed, hotDropLandings, enemyCratesLooted, position, revived, teammatesRevived, timeSurvived,\
+throwablesThrown, top10
+
+Plan:
+
+-Pull data from API
+
+-Store each data (emphasis on organizing player data!)
+
+-Filter the relevant data necessary to interpret play-style
+
+-Do lots of data wrangling…
+
+-Figure out functions to apply, so that we won’t have to manually interpret for each player
+
+<br>
