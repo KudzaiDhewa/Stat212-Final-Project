@@ -20,29 +20,55 @@ library(tidyverse)
 api_key <- "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJqdGkiOiJlNjI0NjI4MC03MjMyLTAxM2QtOGU4MS0yMjViNDYzNmQwYzgiLCJpc3MiOiJnYW1lbG9ja2VyIiwiaWF0IjoxNzI5NTUzNjUxLCJwdWIiOiJibHVlaG9sZSIsInRpdGxlIjoicHViZyIsImFwcCI6InB1YmdfYXBpXzIifQ.TPRaU-Yrrai0kza1Wb8-Kg8gBIy__hz37cStm24B1xI"
 ```
 
-# GETTING A LIST OF SEASONS
-
-```{r}
-# Define the endpoint for seasons
-url <- "https://api.pubg.com/shards/steam/seasons"
-
-# Make the GET request
-response <- GET(url, add_headers(`Authorization` = paste("Bearer", api_key),
+```{r function}
+get_info <- function(url, api_key){
+  Sys.sleep(7)
+  response <- GET(url, add_headers(`Authorization` = paste("Bearer", api_key),
                                   `Accept` = "application/vnd.api+json"))
 
 # Check for a successful response
 if (status_code(response) == 200) {
     # Parse the JSON response
-    seasons_data <- fromJSON(content(response, as = "text"))
-    
+    data <- fromJSON(content(response, as = "text"))
     # Print or process the seasons data
-    print(seasons_data)
+    # print(data)
 } else {
     # Print the error message
     print(paste("Error:", status_code(response)))
     print(content(response, as = "text"))
 }
+  
+  return(data)
+}
 
+
+get_players <- function(url, api_key){
+  
+  print(url)
+
+  match_data <- get_info(url, api_key)
+
+  match <- match_data$included$attributes$stats
+  
+  if (!is.null(match)){
+
+  match <- match %>% 
+    filter(!is.na(playerId), str_detect(playerId, "account")) 
+ }
+  
+  
+
+}
+```
+
+# GETTING A LIST OF SEASONS
+
+```{r}
+# Define the endpoint for seasons
+url_season <- "https://api.pubg.com/shards/steam/seasons"
+
+
+get_info(url_season, api_key)
 
 ```
 
@@ -75,25 +101,19 @@ players_data$data$id
 # GETTING SAMPLE MATCHES (1K)
 
 ```{r}
-url <- "https://api.pubg.com/shards/steam/samples"
+url_sample_matches <- "https://api.pubg.com/shards/steam/samples"
 
-# Make the GET request
-response <- GET(url, add_headers(`Authorization` = paste("Bearer", api_key),
-                                  `Accept` = "application/vnd.api+json"))
+samples <- get_info(url_sample_matches, api_key)
 
-# Check for a successful response
-if (status_code(response) == 200) {
-    # Parse the JSON response
-    players_data <- fromJSON(content(response, as = "text"))
-    
-    # Print or process the seasons data
-    print(players_data)
-} else {
-    # Print the error message
-    print(paste("Error:", status_code(response)))
-    print(content(response, as = "text"))
-}
 
+```
+
+```{r}
+sample_match_list <- samples$data$relationships$matches$data$id
+sample_match_list[1:10]
+```
+
+```{r}
 
 ```
 
@@ -101,29 +121,27 @@ if (status_code(response) == 200) {
 
 ```{r}
 
-url <- "https://api.pubg.com/shards/steam/matches/d7433a22-27b7-4b1b-a34c-6b2b23c49f76"
+url <- "https://api.pubg.com/shards/steam/matches/d68e4939-1c1d-413d-973f-ac3d9ceedd7d"
 
-# Make the GET request
-response <- GET(url, add_headers(`Authorization` = paste("Bearer", api_key),
-                                  `Accept` = "application/vnd.api+json"))
+get_players <- function(url, api_key){
 
-# Check for a successful response
-if (status_code(response) == 200) {
-    # Parse the JSON response
-    match_data <- fromJSON(content(response, as = "text"))
-    
-    # Print or process the seasons data
-    print(match_data)
-} else {
-    # Print the error message
-    print(paste("Error:", status_code(response)))
-    print(content(response, as = "text"))
+  match_data <- get_info(url, api_key)
+
+  match <- match_data$included$attributes$stats
+
+  match <- match %>% 
+    filter(!is.na(playerId), str_detect(playerId, "account")) 
+  
+  return(match)
+
 }
-
 ```
 
 ```{r}
 match <- match_data$included$attributes$stats
+
+match %>% 
+  filter(!is.na(playerId), str_detect(playerId, "account")) 
 ```
 
 ```{r}
@@ -187,6 +205,15 @@ if (status_code(response) == 200) {
 }
 ```
 
+#SURVIVAL MASTER
+
+```{r}
+
+survival_url <- "/players//survival_mastery
+"
+get_info
+```
+
 ```{r}
 url <- "https://api.pubg.com/shards/steam/players/account.cfbdfcdb42324279a9f37d62c201c2ae/weapon_mastery"
 
@@ -194,5 +221,134 @@ weapon <- get_data(url)
 ```
 
 ```{r}
+weapon$data$attributes$weaponSummaries$Item_Weapon_ACE32_C
+```
+
+```{r}
 data.frame(weapon$data$attributes$weaponSummaries$Item_Weapon_AK47_C$StatsTotal)
 ```
+
+##GET PLAYID
+
+```{r}
+sample_match_url <- str_c("https://api.pubg.com/shards/steam/matches/", sample_match_list)
+
+
+sample_subset <- sample_match_url[300:310]
+```
+
+```{r}
+get_players("https://api.pubg.com/shards/steam/matches/a54e0516-e923-4f14-a014-35807b4d3ff1", api_key)
+```
+
+```{r eval = FASLE}
+df_list_500 <- map2(sample_match_url[1:500], api_key, get_players)
+```
+
+```{r eval = FASLE}
+df_list_501_1000 <- map2(sample_match_url[501:1000], api_key, get_players)
+```
+
+```{r eval = FASLE}
+df_list_1001_end <- map2(sample_match_url[1001: length(sample_match_url)], api_key, get_players)
+```
+
+```{r}
+test <- get_players("https://api.pubg.com/shards/steam/matches/fd964b13-3177-4476-939c-c83aaca3c581", api_key)
+
+length()
+
+players_500 <- map_dfr(df_list_500, ~.x)
+
+players_500 %>% 
+  distinct(playerId)
+  
+```
+
+```{r}
+is.null(test$included$attributes$stats)
+```
+
+#get lidetime stats for 10 players
+
+```{r}
+url_player_10 <- "https://api.pubg.com/shards/steam/seasons/lifetime/gameMode/squad/players?filter[playerIds]=account.3bf45db9168f4894979793acaa48b3cb,account.ae059aa7089041739d160b4870516d8c"
+
+
+multi_player <- get_info(url_player_10, api_key)
+```
+
+```{r}
+names(multi_player$data$attributes$gameModeStats$squad)
+```
+
+```{r}
+multi_player$data$relationships$season$data
+```
+
+```{r}
+# total <- c(df_list_500, df_list_501_1000, df_list_1001_end)
+# length(total)
+# df <- map_dfr(total, ~.x)
+
+df %>% 
+  distinct(playerId) 
+
+# 
+# df %>% 
+#   write_csv("../data/playerStatsRand.csv")
+```
+
+```{r}
+names(df)
+```
+
+```{r}
+# walk distance and time survived => log relationship
+df %>% 
+  ggplot(aes(x = timeSurvived, y = damageDealt, color = deathType))+
+  geom_point()+
+  geom_smooth()
+```
+
+```{r}
+df %>% 
+  ggplot(aes(x = revives, y = damageDealt))+
+  geom_point()
+```
+
+```{r}
+levels <- as.character(c(0:19))
+df %>% 
+  filter(damageDealt < 3000) %>% 
+  ggplot(aes(y = damageDealt, x = fct_relevel(as.character(DBNOs), levels)))+
+  geom_boxplot()+
+  labs(x = "Knocks by player",
+       y = "Damage player dealt",
+       title = "Relationship Between Amount of Damage Dealt and Number of Knocks ",
+       caption = "PUBG API")
+```
+
+context: pubg api, a random sample of players across multiple matches
+
+add some pointer to highlight outliers
+
+17 is missing -\> make it consistent
+
+explain what a knock is
+
+talk about the skewness of data being shown
+
+get rid of the grid lines, maybe add color?
+
+```{r}
+df %>% 
+  ggplot(aes(y = damageDealt))+
+  geom_col()
+```
+
+```{r}
+
+```
+
+=\> More knocks =\> strong correlation with damanage dealt.

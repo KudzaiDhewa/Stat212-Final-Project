@@ -1,32 +1,61 @@
 ---
-title: "milestone2"
+title: "Milestone2"
 format: html
 editor: visual
 ---
 
-## Quarto
+Refined research Questions:
 
-Quarto enables you to weave together content and executable code into a finished document. To learn more about Quarto see <https://quarto.org>.
+**Q1: Player Performance Analysis: Can we predict a player’s success in terms of key performance indicators like kill count, win probability, and survival time, by analyzing mastery levels, playstyle, and historical performance data?**
 
-## Running Code
+**Q2: How does weapon mastery for each player differ for the varying preferred modes (i.e. solo, duo, squad)? Do players perform better playing solo or in teams (duo, squad)?**\
 
-When you click the **Render** button a document will be generated that includes both content and the output of embedded code. You can embed code like this:
+**Q3: What are some of the most common player behaviors?**
 
-```{r}
-1 + 1
-```
+-   Hot drop analysis: what are the locations that are the hottest battlegrounds (places that see most players land)
 
-You can add options to executable code like this
+Do your 2-3 original broad questions need to be revised? **Yes, we added a couple more to steer away from overly being fixated on just the player data.**
 
-```{r}
-#| echo: false
-2 * 2
+What additional information and context (news articles, journal articles, expert interview, etc.) do you need to understand the data?
 
+**Since we all have played the game to a certain extent we know what most of the variables are. In cases we don’t, we can always look up the documentation. With any new updates to the game since we have played personally, we are able to search up the newer variables that corresponds to the version of the API data.**
 
-```
+Is it time to start looking for additional datasets? 
+
+**We have other endpoints in the API we haven’t touched yet. At this point, we speculate that the three endpoints we are currently using, lifetime stats, survival mastery and weapon mastery, provide us with enough material to play with**
+
+Revised Plan:
+
+Pull data from API:
+
+-   There is no direct way to get player IDs from the API. The way we are going to work around this is first we get a bunch of sample matches and within each match ID, we pull all the player ID’s associated with that match
+
+-   However, there are chances a player can appear more than once and that there are bots (computers) playing in place of the human player. We will need to filter those bots out and count unique.
+
+-   Then we append all player data and create a table called playerID. We save it as a csv file because it will take a long time to process 1k sample matches.
+
+Data Creation
+
+-   Once we acquire a set of player ID, we can proceed to drill down to specific endpoints of the API, such as lifetime stats, survival master and weapon mastery.
+
+-   We then repeat the process of pulling and appending data we need to address the research questions, saving the data tables as files so that we don’t have to make calls to the API again.
+
+Data Visualization
+
+-   Once we have all the data we need, the next step is to perform data manipulation/wrangling to achieve the visualizations that best answer our research questions
+
+Group meeting: Discuss and refine research questions and rework on milestones 1 and 2 (\*Take note of data accessing in the API)
+
+-   Task: Each group member chooses a question and comes up with a general visualization idea
+
+-   Task: Further read into the API Documentation, specifically focusing on survival mastery, weapons mastery, and lifetime stats
+
+-   Task: Share code on Slack group chat
+
+    Group meeting: Gather and evaluate current situation in project, also considering additional resource/ context we might need
+
+-   Task + Group meeting: Decide on one specific research question and start drafting up a response for Milestone 3
 
 ```{r}
 sessionInfo()
 ```
-
-The `echo: false` option disables the printing of code (only output is displayed).
