@@ -8,16 +8,17 @@ editor: visual
 # install.packages("devtools")
 # install_github("lazyjustin/rPUBG")
 # 
-# library(devtools)
+library(devtools)
 # library(rPUBG)
 library(httr) # making HTTP requests to web APIs and web servers
 library(jsonlite) #to read json files
 library(urltools)
 library(tidyverse)
+library(dplyr)
 ```
 
 ```{r}
-api_key <- "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJqdGkiOiJlNjI0NjI4MC03MjMyLTAxM2QtOGU4MS0yMjViNDYzNmQwYzgiLCJpc3MiOiJnYW1lbG9ja2VyIiwiaWF0IjoxNzI5NTUzNjUxLCJwdWIiOiJibHVlaG9sZSIsInRpdGxlIjoicHViZyIsImFwcCI6InB1YmdfYXBpXzIifQ.TPRaU-Yrrai0kza1Wb8-Kg8gBIy__hz37cStm24B1xI"
+api_key <- "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJqdGkiOiI0ZTNlOGE0MC03N2IxLTAxM2QtNWRjNy0xYWNkNDhkZWFmNTAiLCJpc3MiOiJnYW1lbG9ja2VyIiwiaWF0IjoxNzMwMTU3Njk4LCJwdWIiOiJibHVlaG9sZSIsInRpdGxlIjoicHViZyIsImFwcCI6InN0YXQyMTIifQ.T8ZFS6OssVUPJRwU8I-l5-tokA3TZGCov7NnYNPOnP8"
 ```
 
 ```{r function}
@@ -95,7 +96,7 @@ if (status_code(response) == 200) {
 ```
 
 ```{r}
-players_data$data$id
+samplePlayer <- players_data$data$id
 ```
 
 # GETTING SAMPLE MATCHES (1K)
@@ -138,9 +139,9 @@ get_players <- function(url, api_key){
 ```
 
 ```{r}
-match <- match_data$included$attributes$stats
+#match <- match_data$included$attributes$stats
 
-match %>% 
+#match %>% 
   filter(!is.na(playerId), str_detect(playerId, "account")) 
 ```
 
@@ -150,11 +151,11 @@ match %>%
 ```
 
 ```{r}
- match_data$included$relationships$participants$data
+ #match_data$included$relationships$participants$data
 ```
 
 ```{r}
-View(roster$attributes) 
+#View(roster$attributes) 
 ```
 
 # GETTING LIFETIME STATS FOR A PLAYER
@@ -254,19 +255,19 @@ df_list_1001_end <- map2(sample_match_url[1001: length(sample_match_url)], api_k
 ```
 
 ```{r}
-test <- get_players("https://api.pubg.com/shards/steam/matches/fd964b13-3177-4476-939c-c83aaca3c581", api_key)
+#test <- get_players("https://api.pubg.com/shards/steam/matches/fd964b13-3177-4476-939c-c83aaca3c581", api_key)
 
-length()
+#length()
 
-players_500 <- map_dfr(df_list_500, ~.x)
+#players_500 <- map_dfr(df_list_500, ~.x)
 
-players_500 %>% 
+#players_500 %>% 
   distinct(playerId)
   
 ```
 
 ```{r}
-is.null(test$included$attributes$stats)
+#is.null(test$included$attributes$stats)
 ```
 
 #get lidetime stats for 10 players
@@ -352,3 +353,103 @@ df %>%
 ```
 
 =\> More knocks =\> strong correlation with damanage dealt.
+
+# Vizualization
+
+```{r}
+# Boxplot: Relationship Between Knocks (DBNOs) and Damage Dealt
+library(ggplot2)
+library(forcats) # For categorical variable manipulation
+
+# make data frame of weapon
+# Extract weaponSummaries
+weapon_summaries <- weapon$data$attributes$weaponSummaries
+
+# Extract weapon names (keys of the list)
+weapon_names <- names(weapon_summaries)
+
+# Convert the nested list into a dataframe
+weapon_df <- map2_dfr(weapon_names, weapon_summaries, ~{
+  weapon_data <- as.data.frame(t(.y))  # Convert nested list to a dataframe
+  weapon_data$weapon <- .x            # Add weapon name as a column
+  return(weapon_data)
+})
+
+# View the resulting dataframe
+print(weapon_df)
+
+
+# Ensure all levels of DBNOs are included
+levels <- as.character(0:19) # Adjust to include full range
+
+# Ensure numeric columns (e.g., damageDealt) are properly converted
+weapon_df <- weapon_df %>% mutate(across(where(is.character), as.numeric))
+```
+
+```{r}
+library(tidyverse)
+
+# Extract and flatten StatsTotal into a dataframe
+flatten_stats_total <- function(stats_list) {
+  map_dfr(stats_list, ~ as.data.frame(t(unlist(.x)), stringsAsFactors = FALSE))
+}
+
+# Flatten the StatsTotal column in weapon_df
+stats_df <- flatten_stats_total(weapon_df$StatsTotal)
+
+# Combine the flattened stats with the original data
+# Drop the original StatsTotal column to avoid duplication
+final_weapon_df <- weapon_df %>%
+  select(-StatsTotal) %>%
+  bind_cols(stats_df)
+
+# View the final dataframe
+print(final_weapon_df)
+
+```
+
+
+
+```{r}
+library(ggplot2)
+
+# Scatterplot with weapon labels
+ggplot(final_weapon_df, aes(x = as.numeric(DamagePlayer), y = as.numeric(Kills), label = weapon)) +
+  geom_point(size = 3, alpha = 0.7, color = "grey50") +
+  geom_smooth(method = "lm", se = FALSE, linetype = "dashed", color = "black") +
+  geom_text(vjust = -0.5, hjust = 0.5, size = 3, check_overlap = TRUE) + # Add labels with overlap check
+  labs(
+    x = "Total Damage",
+    y = "Total Kills",
+    title = "Relationship Between Damage and Kills by Weapon",
+    subtitle = "Labels Indicate Weapon Names",
+    caption = "Source: PUBG API"
+  ) +
+  theme_minimal()
+
+```
+
+```{r}
+finals_weapon_df <- final_weapon_df %>%
+  mutate(
+    TierCurrent = as.numeric(unlist(TierCurrent)),  # Convert TierCurrent to numeric
+    Kills = as.numeric(unlist(Kills)),             # Ensure Kills is numeric
+    DamagePlayer = as.numeric(unlist(DamagePlayer)) # Ensure DamagePlayer is numeric
+  )
+
+ggplot(finals_weapon_df, aes(x = as.factor(TierCurrent), y = Kills, fill = as.factor(TierCurrent))) +
+  geom_bar(stat = "identity") +
+  labs(
+    x = "Tier",
+    y = "Total Kills",
+    title = "Total Kills by Tier",
+    subtitle = "PUBG Player Performance by Tier",
+    caption = "Source: PUBG API"
+  ) +
+  theme_minimal() +
+  theme(legend.position = "none")
+
+```
+
+
+
