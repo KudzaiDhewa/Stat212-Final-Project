@@ -1,0 +1,27 @@
+---
+title: "Milestone3"
+format: html
+editor: visual
+---
+
+## Importance of topic
+
+For PUBG players or those interested in becoming one, such as our group, it is helpful to have statistical data for strategic game play.
+
+We have 3 broad questions that serve the topics of player performance analysis, weapon mastery analysis, and hot drop analysis. These three areas of game play can provide a more comprehensive understanding of the gaming dynamics and mechanics, improving the overall experience for a player.
+
+A visual analysis of performance and preference can assist in creating a more personalized and engaging experience for players by allowing developers to refine game mechanics, ensuring fairness, competitiveness, and satisfaction across the various modes. Also, insights into hot drop zones and weapon mastery, for instance, can help ensure balanced resource allocation and gameplay dynamics.
+
+Moreover, players are more likely to remain engaged when they see tangible opportunities and improvements for growth. Developers may be able to anticipate and address player needs with shared strategies, meta-analysis, and cultural elements like popular landing zones derived from the data visuals.
+
+The overall growing popularity of esports and competitive gaming, understanding player success predictors, optimal strategies for different modes, and popular battlegrounds can provide teams and players with critical strategic advantages. It also enhances the viewing experience by spotlighting key action areas and emergent gameplay trends.
+
+## Rationale of narrowing the scope of our questions
+
+## Plots/Modeling output & Connection to our questions
+
+## Main Takeaways
+
+## Limitations & Ethical considerations
+
+## Future directions
