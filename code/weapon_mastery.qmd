@@ -1,26 +1,202 @@
 ---
-title: "weapon_master"
+title: "Weapons Mastery"
 format: html
 editor: visual
 ---
 
-## Quarto
-
-Quarto enables you to weave together content and executable code into a finished document. To learn more about Quarto see <https://quarto.org>.
-
-## Running Code
-
-When you click the **Render** button a document will be generated that includes both content and the output of embedded code. You can embed code like this:
+## Load Libraries
 
 ```{r}
-1 + 1
+library(tidyverse)
+library(ggplot2)
+library(dplyr)
+library(tibble)
+library(forcats)
 ```
 
-You can add options to executable code like this
+## Load all player IDs
 
 ```{r}
-#| echo: false
-2 * 2
+playerID <- read_csv(____)
 ```
 
-The `echo: false` option disables the printing of code (only output is displayed).
+## Call API and Sample Player
+### API key
+```{r}
+api_key <- "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJqdGkiOiI0ZTNlOGE0MC03N2IxLTAxM2QtNWRjNy0xYWNkNDhkZWFmNTAiLCJpc3MiOiJnYW1lbG9ja2VyIiwiaWF0IjoxNzMwMTU3Njk4LCJwdWIiOiJibHVlaG9sZSIsInRpdGxlIjoicHViZyIsImFwcCI6InN0YXQyMTIifQ.T8ZFS6OssVUPJRwU8I-l5-tokA3TZGCov7NnYNPOnP8"
+```
+
+### API call
+```{r}
+get_info <- function(url, api_key){
+  Sys.sleep(7)
+  response <- GET(url, add_headers(`Authorization` = paste("Bearer", api_key),
+                                  `Accept` = "application/vnd.api+json"))
+
+# Check for a successful response
+if (status_code(response) == 200) {
+    # Parse the JSON response
+    data <- fromJSON(content(response, as = "text"))
+    # Print or process the seasons data
+    # print(data)
+} else {
+    # Print the error message
+    print(paste("Error:", status_code(response)))
+    print(content(response, as = "text"))
+}
+  
+  return(data)
+}
+```
+
+### Get one sample player
+```{r}
+samplePlayer <- players_data$data$id
+samplePlayer <- "account.cfbdfcdb42324279a9f37d62c201c2ae"
+samplePlayer
+```
+
+### Get weapons mastery for sample player
+```{r}
+url <- paste("https://api.pubg.com/shards/steam/players/",samplePlayer,"/weapon_mastery", sep = "")
+
+sampleWeapons <- get_info(url, api_key)
+```
+```{r}
+sampleWeaponSumm <- as_tibble(samplePlayerWeapons$data$attributes$weaponSummaries)
+
+weaponNames <- names(sampleWeaponSumm)
+
+sampleWeaponsDF <- map2_dfr(weaponNames, sampleWeaponSumm, ~{
+  weapon_data <- as.data.frame(t(.y))
+  weapon_data$weapon <- .x
+  return(weapon_data)
+})
+```
+
+### Split each `StatsTotal`, `OfficialStatsTotal`, and `CompetitiveStatsTotal` lists from sampleWeaponsDF into separate columns
+```{r}
+flattenStatsTotal <- function(stats_list) {
+  map_dfr(stats_list, ~ as.data.frame(t(unlist(.x)), stringsAsFactors = FALSE))
+}
+
+StatsDF <- flatten_stats_total(weapon_df$StatsTotal)
+OfficialStatsDF <- flatten_stats_total(weapon_df$OfficialStatsTotal)
+CompetitiveStatsDF <- flatten_stats_total(weapon_df$CompetitiveStatsTotal)
+
+sampleWeaponsDF <- sampleWeaponsDF %>%
+  select(-StatsTotal) %>%
+  select(-OfficialStatsTotal) %>%
+  select(-CompetitiveStatsTotal) %>%
+  bind_cols(StatsDF) %>%
+  bind_cols(OfficialStatsDF) %>%
+  bind_cols(CompetitiveStatsDF)
+```
+
+## Clean data by combining and summarizing the average stat of weapons mastery for sample player
+```{r}
+colnames(sampleWeaponsDF) <- gsub("\\.\\.\\.\\d+$", "", colnames(sampleWeaponsDF))
+
+unique_names <- unique(colnames(sampleWeaponsDF))
+
+sampleWeaponsDF_cleaned <- unique_names %>%
+  map_dfc(~ {
+    cols <- select(sampleWeaponsDF, all_of(.x))
+    cols <- cols %>% mutate(across(everything(), as.numeric, .names = "converted_{.col}")) 
+    if (all(sapply(cols, is.numeric))) {
+      tibble(!!sym(.x) := rowMeans(cols, na.rm = TRUE))
+    } else {
+      tibble(!!sym(.x) := cols[[1]])
+    }
+  })
+```
+
+## Clean even more
+```{r}
+sampleWeaponsDF_cleaned <- sampleWeaponsDF_cleaned %>%
+  select(-Medals)
+
+sampleWeaponsDF_cleaned$weapon <- gsub("Item_Weapon_", "", sampleWeaponsDF_cleaned$weapon) %>%
+  gsub("_C", "", .)
+```
+
+## Make into function that applies to all player IDs
+```{r}
+# Function to get weapons mastery for all players in the playerID list
+get_all_players_weapons <- function(playerID, api_key) {
+  playerWeapons <- list()
+  for (i in 1:length(playerID)) {
+    player <- playerID[i]
+    url <- paste("https://api.pubg.com/shards/steam/players/",player,"/weapon_mastery", sep = "")
+    playerWeapons[[i]] <- get_info(url, api_key)
+  }
+  
+  return(playerWeapons)
+}
+
+# Function to clean weapons mastery data for each players
+clean_weapons_data <- function(playerWeapons) {
+  playerWeaponsDF <- map(playerWeapons, ~{
+    playerWeaponSumm <- as_tibble(.x$data$attributes$weaponSummaries)
+    weaponNames <- names(playerWeaponSumm)
+    
+    playerWeaponsDF <- map2_dfr(weaponNames, playerWeaponSumm, ~{
+      weapon_data <- as.data.frame(t(.y))
+      weapon_data$weapon <- .x
+      return(weapon_data)
+    })
+    
+    StatsDF <- flatten_stats_total(playerWeaponsDF$StatsTotal)
+    OfficialStatsDF <- flatten_stats_total(playerWeaponsDF$OfficialStatsTotal)
+    CompetitiveStatsDF <- flatten_stats_total(playerWeaponsDF$CompetitiveStatsTotal)
+    
+    playerWeaponsDF <- playerWeaponsDF %>%
+      select(-StatsTotal) %>%
+      select(-OfficialStatsTotal) %>%
+      select(-CompetitiveStatsTotal) %>%
+      bind_cols(StatsDF) %>%
+      bind_cols(OfficialStatsDF) %>%
+      bind_cols(CompetitiveStatsDF)
+    
+    colnames(playerWeaponsDF) <- gsub("\\.\\.\\.\\d+$", "", colnames(playerWeaponsDF))
+    
+    unique_names <- unique(colnames(playerWeaponsDF))
+    
+    playerWeaponsDF_cleaned <- unique_names %>%
+      map_dfc(~ {
+        cols <- select(playerWeaponsDF, all_of(.x))
+        cols <- cols %>% mutate(across(everything(), as.numeric, .names = "converted_{.col}")) 
+        if (all(sapply(cols, is.numeric))) {
+          tibble(!!sym(.x) := rowMeans(cols, na.rm = TRUE))
+        } else {
+          tibble(!!sym(.x) := cols[[1]])
+        }
+      })
+    
+    playerWeaponsDF_cleaned <- playerWeaponsDF_cleaned %>%
+      select(-Medals)
+    
+    playerWeaponsDF_cleaned$weapon <- gsub("Item_Weapon_", "", playerWeaponsDF_cleaned$weapon) %>%
+      gsub("_C", "", .)
+    
+    return(playerWeaponsDF_cleaned)
+  })
+  
+  return(playerWeaponsDF)
+}
+
+# Get all players weapons mastery
+allPlayersWeapons <- get_all_players_weapons(playerID, api_key) %>%
+  clean_weapons_data()
+```
+
+## All players' weapons mastery data combined
+```{r}
+allPlayersWeaponsDF <- bind_rows(allPlayersWeapons, .id = "playerID")
+```
+
+## Data viz
+```{r}
+
+```
+
