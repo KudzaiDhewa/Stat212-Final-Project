@@ -408,8 +408,6 @@ print(final_weapon_df)
 
 ```
 
-
-
 ```{r}
 library(ggplot2)
 
@@ -450,6 +448,3 @@ ggplot(finals_weapon_df, aes(x = as.factor(TierCurrent), y = Kills, fill = as.fa
   theme(legend.position = "none")
 
 ```
-
-
-

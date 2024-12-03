@@ -4,23 +4,115 @@ format: html
 editor: visual
 ---
 
-## Quarto
-
-Quarto enables you to weave together content and executable code into a finished document. To learn more about Quarto see <https://quarto.org>.
-
-## Running Code
-
-When you click the **Render** button a document will be generated that includes both content and the output of embedded code. You can embed code like this:
-
 ```{r}
-1 + 1
+library(tidyverse)
+library(httr) # making HTTP requests to web APIs and web servers
+library(jsonlite) #to read json files
+library(urltools)
+library(tidyverse)
+library(dplyr)
+library(readr)
 ```
 
-You can add options to executable code like this
+```{r api call}
 
-```{r}
-#| echo: false
-2 * 2
+get_info <- function(url, api_key){
+  Sys.sleep(6)
+  responsev <- GET(url, add_headers(`Authorization` = paste("Bearer", api_key),
+                                  `Accept` = "application/vnd.api+json"))
+
+# Check for a successful response
+if (status_code(response) == 200) {
+    # Parse the JSON response
+    data <- fromJSON(content(response, as = "text"))
+    # Print or process the seasons data
+    # print(data)
+} else {
+    # Print the error message
+    print(paste("Error:", status_code(response)))
+    print(content(response, as = "text"))
+}
+  
+  return(data)
+}
+
 ```
 
-The `echo: false` option disables the printing of code (only output is displayed).
+```{r api key}
+api_key <- "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJqdGkiOiJlNjI0NjI4MC03MjMyLTAxM2QtOGU4MS0yMjViNDYzNmQwYzgiLCJpc3MiOiJnYW1lbG9ja2VyIi"
+```
+
+```{r}
+url_season <- "https://api.pubg.com/shards/steam/seasons"
+
+
+season_data <- get_info(url_season, api_key)
+```
+
+```{r season ID}
+url_season <- "https://api.pubg.com/shards/steam/seasons"
+
+
+season_data <- get_info(url_season, api_key)
+
+```
+
+```{r}
+survival_url_head <- "https://api.pubg.com/shards/steam/players/"
+```
+
+```{r load player id}
+
+player_id <- read_csv("../data/players.csv")
+
+all <- player_id %>% pull()
+
+first_10000 <- all[1:10000]
+
+length(first_10000)
+
+first_10000[1:10]
+```
+
+```{r get matches}
+
+url_match <- "https://api.pubg.com/shards/steam/samples"
+
+match_data <- get_info(url_match, api_key)
+
+match_data
+```
+
+```{r}
+# Define API key and endpoint
+match_id <- "b46728f2-ba73-45e9-a29b-ba6676ef23a6"  # Replace with a valid match ID
+url <- paste0("https://api.pubg.com/shards/steam", "/matches/", match_id)
+
+# API request headers
+headers <- add_headers(
+  Authorization = paste("Bearer", api_key),
+  Accept = "application/vnd.api+json"
+)
+
+# Fetch match data
+response <- GET(url, headers)
+match_data <- content(response, as = "parsed", type = "application/json")
+
+# Extract telemetry URL
+telemetry_url <- match_data$data$relationships$assets$data[[1]]$id
+print(paste("Telemetry URL:", telemetry_url))
+```
+
+```{r}
+#process url
+
+url_all <- str_c(survival_url_head, "account.477a1c860f7f4820b87a02571c9f8c29", "/survival_mastery")
+
+
+data <- get_info(url_all, api_key)
+data
+```
+
+```{r}
+
+```
