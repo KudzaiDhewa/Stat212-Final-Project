@@ -1,0 +1,207 @@
+---
+title: "data"
+format: html
+editor: visual
+---
+
+## Quarto
+
+Quarto enables you to weave together content and executable code into a finished document. To learn more about Quarto see <https://quarto.org>.
+
+## Running Code
+
+When you click the **Render** button a document will be generated that includes both content and the output of embedded code. You can embed code like this:
+
+```{r}
+library(httr) # making HTTP requests to web APIs and web servers
+library(jsonlite) #to read json files
+library(urltools)
+library(tidyverse)
+library(purrr)
+
+```
+
+```{r}
+player_ids <- read.csv("../course_project/players.csv")
+```
+
+You can add options to executable code like this
+
+```{r}
+api_key <- "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJqdGkiOiJhOGVkYjBkMC03N2IxLTAxM2QtNjI3Mi0xNjVmNmJlZjNhYmMiLCJpc3MiOiJnYW1lbG9ja2VyIiwiaWF0IjoxNzMwMTU3ODUwLCJwdWIiOiJibHVlaG9sZSIsInRpdGxlIjoicHViZyIsImFwcCI6InN0YXRzcHJvamVjdCJ9.TGpk6uvZJH4x7A5MsrZuWKSBHw4mkoPp1nYcPqYjKEg"
+
+
+```
+
+```{r}
+
+###set system sleep for a while when pulling the data
+###use the endpoint where you can pull data in groups of ten
+## and know rate limit to do this.
+
+get_lifetime_stats <- function(account_id, platform = "steam", api_key) {
+  # Base URL and endpoint construction
+  base_url <- "https://api.pubg.com"
+  
+  # Set up headers with authorization
+  headers <- c(
+    "Authorization" = paste("Bearer", api_key),
+    "Accept" = "application/json"
+  )
+  
+  # Make a request to get the player's details using the account ID
+  player_endpoint <- paste0("/shards/", platform, "/players/", account_id)
+  player_url <- paste0(base_url, player_endpoint)
+  player_response <- GET(player_url, add_headers(.headers = headers))
+  
+  # Check if player lookup was successful
+  if (status_code(player_response) != 200) {
+    cat("Failed to fetch player data. Status code:", status_code(player_response), "\n")
+    print(content(player_response))
+    return(NULL)
+  }
+  
+  # Parse player data to get the username
+  player_data <- fromJSON(content(player_response, as = "text"), flatten = TRUE)
+  player_name <- player_data$data$attributes$name
+  
+  # Construct the URL for the lifetime stats endpoint using the account ID
+  stats_endpoint <- paste0("/shards/", platform, "/players/", account_id, "/seasons/lifetime")
+  stats_url <- paste0(base_url, stats_endpoint)
+  
+  # Fetch lifetime stats
+  stats_response <- GET(stats_url, add_headers(.headers = headers))
+  
+  # Check if lifetime stats request was successful
+  if (status_code(stats_response) != 200) {
+    cat("Failed to fetch stats data. Status code:", status_code(stats_response), "\n")
+    print(content(stats_response))
+    return(NULL)
+  }
+  
+  # Parse the stats response
+  stats_data <- fromJSON(content(stats_response, as = "text"), flatten = TRUE)
+  data_list <- stats_data$data
+  
+  # Define game modes to extract
+  game_modes <- c("duo", "duo-fpp", "solo", "solo-fpp", "squad", "squad-fpp")
+  
+  # Extract stats for each game mode and add account ID and player name
+  game_mode_data <- lapply(game_modes, function(mode) {
+    mode_data <- data_list$attributes$gameModeStats[[mode]]
+    if (!is.null(mode_data)) {
+      mode_data$gameMode <- mode  # Add game mode
+      mode_data$accountId <- account_id  # Add account ID
+      mode_data$playerName <- player_name  # Add player name
+      return(as.data.frame(mode_data, stringsAsFactors = FALSE))
+    } else {
+      return(NULL)
+    }
+  })
+  
+  # Combine game mode data into a single data frame, filtering out NULL values
+  df <- do.call(rbind, game_mode_data[!sapply(game_mode_data, is.null)])
+  
+  # Reorder columns to put `gameMode`, `accountId`, and `playerName` at the beginning
+  df <- df %>%
+    select(accountId, playerName, gameMode, everything())
+  
+  return(df)
+}
+
+###Exploring team work through PUBG API data
+###Maybe use the maps and stuff.
+#have to get the different ones
+
+player_stats10 <- get_lifetime_stats("account.de42b63d95dc48f1ae047882c0ffd351", platform = "steam", api_key = api_key)
+
+# View the player's stats
+head(player_stats10)
+
+
+combined_dataframe <- bind_rows(player_stats1,player_stats2,player_stats3,player_stats,player_stats5,player_stats6,player_stats7,player_stats8,player_stats9,player_stats10)
+
+names(combined_dataframe)
+
+
+###read in the data
+
+```
+
+```{r}
+# List of account IDs to process
+account_ids <- player_ids$playerId %>% head(500) # Replace with actual account IDs
+
+
+# Initialize an empty list to store the results
+all_player_data <- list()
+
+# Loop through the account IDs in chunks of 10
+for (i in seq(1, length(account_ids), by = 10)) {
+  # Extract the current chunk of up to 10 account IDs
+  chunk <- account_ids[i:base::min(i + 9, length(account_ids))]
+  
+  # Process each account ID in the chunk
+  for (account_id in chunk) {
+    cat("Processing account:", account_id, "\n")
+    
+    # Fetch lifetime stats
+    player_data <- get_lifetime_stats(account_id, api_key = api_key)
+    
+    # Store the data
+    if (!is.null(player_data)) {
+      all_player_data[[account_id]] <- player_data
+    }
+  }
+  
+  # Pause for 60 seconds after each chunk of 10 players, except the last chunk
+  if (i + 9 < length(account_ids)) {
+    cat("Rate limit reached. Pausing for 60 seconds...\n")
+    Sys.sleep(60)  # Pause for 60 seconds
+  }
+}
+
+# Combine all the player data into a single data frame
+final_data <- do.call(rbind, all_player_data)
+
+# View the resulting data
+print(final_data)
+
+write.csv(final_data, "final_lifetime_stats.csv", row.names = FALSE)
+
+```
+
+##### Exploring teamwork through PUBG.
+
+###explore number of wins people get when playing in a group compared to playing solo. Number of revives that they get.
+
+### #looking at lifetime trends
+
+The `echo: false` option disables the printing of code (only output is displayed).
+
+####leaderboard on pc-na
+
+##get a particular season and then pull names of players
+
+##use function to get the lifetime stats on these players
+
+##create a table and a visualization
+
+```{lifetimestats <- read_csv("Data/playerlifetimestats.csv")}
+df %>%
+  mutate(mode_type = ifelse(gameMode == "solo" | gameMode == "solo-fpp", "Solo", "Team")) %>%
+  ggplot(aes(x = mode_type, y = maxKillStreaks)) +
+  geom_boxplot() +
+  labs(title = "Kill Streaks: Solo vs Team", x = "Mode Type", y = "Max Kill Streaks")
+
+```
+
+```{r}
+
+lifetimestats <- read_csv("Data/playerlifetimestats.csv")
+df %>%
+  mutate(mode_type = ifelse(gameMode == "solo" | gameMode == "solo-fpp", "Solo", "Team")) %>%
+  ggplot(aes(x = mode_type, y = maxKillStreaks)) +
+  geom_boxplot() +
+  labs(title = "Kill Streaks: Solo vs Team", x = "Mode Type", y = "Max Kill Streaks")
+```

@@ -1,0 +1,252 @@
+---
+title: "PUBGviz"
+format: html
+editor: visual
+---
+
+## Quarto
+
+Quarto enables you to weave together content and executable code into a finished document. To learn more about Quarto see <https://quarto.org>.
+
+```{r}
+library(readr)
+library(dplyr)
+library(ggplot2)
+library(plotly)
+library(tidyr)
+library(patchwork)
+```
+
+## Running Code
+
+When you click the **Render** button a document will be generated that includes both content and the output of embedded code. You can embed code like this:
+
+```{r fig.width=12, fig.height=6}
+
+ggplot(lifetimestats, aes(x= gameMode, y = roundsPlayed)) + geom_col() + theme_minimal()
+
+win_rate_data <- final_data %>%
+  group_by(gameMode) %>%
+  summarise(
+    total_games = sum(roundsPlayed),  # Replace with your total games variable
+    total_wins = sum(wins)         # Replace with your wins variable
+  ) %>%
+  mutate(
+    win_rate = total_wins / total_games,
+    mode_type = if_else(gameMode %in% c("solo", "solo-fpp"), "Solo", "Team")
+  )
+
+# Create the heatmap
+win_heatmap <- ggplot(win_rate_data, aes(x = gameMode, y = mode_type, fill = win_rate)) +
+  geom_tile(color = "white") +
+scale_fill_viridis_c(option = "viridis") +
+  labs(
+    title = "Win Rate by Game Mode",
+    x = " ",
+    y = "Mode Type"
+  ) +
+  theme_minimal()
+
+
+survival_rate_data <- final_data %>%
+  group_by(gameMode) %>%
+  summarise(
+    total_games = sum(roundsPlayed),  # Replace with your total games variable
+    total_wins = sum(timeSurvived)         # Replace with your wins variable
+  ) %>%
+  mutate(
+    survival_rate = total_wins / total_games,
+    mode_type = if_else(gameMode %in% c("solo", "solo-fpp"), "Solo", "Team")
+  )
+
+# Create the heatmap
+survival_heatmap <- ggplot(survival_rate_data, aes(x = gameMode, y = mode_type, fill = survival_rate)) +
+  geom_tile(color = "white") +
+  scale_fill_viridis_c(option = "viridis") +
+  labs(
+    title = "Survival Rate by Game Mode",
+    x = " ",
+    y = " "
+  ) +
+  theme_minimal()
+
+combined_plot <- win_heatmap + survival_heatmap +
+  plot_layout(ncol = 2) + # Arrange them side-by-side
+  plot_annotation(title = "Win Rate and Survival Rate Heatmaps")
+
+# Display the combined plot
+combined_plot
+```
+
+You can add options to executable code like this
+
+```{r}
+names(lifetimestats)
+```
+
+The `echo: false` option disables the printing of code (only output is displayed).
+
+```{r}
+library(ggplot2)
+library(dplyr)
+
+# Calculate average assists and revives per game mode
+teamwork_data <- lifetimestats %>%
+  group_by(gameMode) %>%
+  summarise(
+    avg_assists = mean(assists, na.rm = TRUE),
+    avg_revives = mean(revives, na.rm = TRUE)
+  )
+
+# Scatterplot
+ggplot(teamwork_data, aes(x = avg_assists, y = avg_revives, color = gameMode)) +
+  geom_point(size = 4) +
+
+  labs(
+    title = "Average Assists vs. Revives Across Game Modes",
+    x = "Average Assists",
+    y = "Average Revives",
+    color = "Game Mode"
+  ) +
+  theme_minimal()
+
+```
+
+```{r}
+# Summarize travel distance
+distance_data <- lifetimestats %>%
+  group_by(gameMode) %>%
+  summarise(
+    avg_ride_distance = mean(rideDistance, na.rm = TRUE),
+    avg_walk_distance = mean(walkDistance, na.rm = TRUE)
+  )
+
+# Bar plot for travel distances
+ggplot(distance_data, aes(x = gameMode)) +
+  geom_bar(aes(y = avg_ride_distance, fill = "Ride Distance"), stat = "identity", position = "dodge") +
+  geom_bar(aes(y = avg_walk_distance, fill = "Walk Distance"), stat = "identity", position = "dodge") +
+  labs(
+    title = "Ride Distance vs. Walk Distance Across Game Modes",
+    x = "Game Mode",
+    y = "Average Distance",
+    fill = "Distance Type"
+  ) +
+  theme_minimal()
+
+```
+
+```{r}
+library(ggplot2)
+library(dplyr)
+
+# Calculate top10 rate (top 10 finishes / rounds played) by game mode
+top10_rate <- lifetimestats %>%
+  group_by(gameMode) %>%
+  summarise(
+    total_top10s = sum(top10s, na.rm = TRUE),
+    total_rounds = sum(roundsPlayed, na.rm = TRUE)
+  ) %>%
+  mutate(top10_rate = total_top10s / total_rounds)
+
+# Bar plot of top10 rates
+ggplot(top10_rate, aes(y= gameMode, x = top10_rate, fill = gameMode)) +
+  geom_col() +
+  scale_x_continuous(labels = scales::percent) +
+  labs(
+    title = "Proportion of Top 10 Finishes by Game Mode",
+    y = "Game Mode",
+    x = "Top 10 Rate (Percentage)",
+    fill = "Game Mode"
+  ) +
+  theme_minimal()
+
+
+```
+
+```{r}
+### How a particular player has done over time
+###Experience
+
+
+###Exploring teamwork and experience through PUBG
+
+
+```
+
+```{r}
+library(cluster)
+library(factoextra)
+```
+
+```{r}
+cluster_data <- final_data %>%
+  select(kills, assists, damageDealt, timeSurvived, wins)
+
+head(cluster_data)
+
+
+##Normalize the data
+cluster_data_scaled <- scale(cluster_data)
+head(cluster_data_scaled)
+
+##elbow method to find the optimum number of clusters
+fviz_nbclust(cluster_data_scaled, kmeans, method = "wss")  +
+  labs(title = "Elbow Method for Optimal Clusters")
+```
+
+```{r}
+# Set the number of clusters (e.g., k = 3)
+k <- 4
+
+# Run k-means clustering
+kmeans_result <- kmeans(cluster_data_scaled, centers = k, nstart = 25)
+
+# Add cluster assignments to the original data
+cluster_data$cluster <- as.factor(kmeans_result$cluster)
+
+# View cluster assignments
+head(cluster_data)
+
+```
+
+```{r}
+# Perform PCA for visualization
+pca_result <- prcomp(cluster_data_scaled, center = TRUE, scale. = TRUE)
+
+# Create a data frame for plotting
+pca_data <- as.data.frame(pca_result$x[, 1:2])
+pca_data$cluster <- cluster_data$cluster
+
+# Plot the clusters
+ggplot(pca_data, aes(x = PC1, y = PC2, color = cluster)) +
+  geom_point(size = 3, alpha = 0.7) +
+  labs(title = "Player Clusters (PCA)", x = "Principal Component 1", y = "Principal Component 2") +
+  theme_minimal()
+
+
+```
+
+```{r}
+# Summarize metrics by cluster
+cluster_summary <- cluster_data %>%
+  group_by(cluster) %>%
+  summarize(
+    avg_kills = mean(kills, na.rm = TRUE),
+    avg_assists = mean(assists, na.rm = TRUE),
+    avg_damageDealt = mean(damageDealt, na.rm = TRUE),
+    avg_timeSurvived = mean(timeSurvived, na.rm = TRUE),
+    avg_wins = mean(wins, na.rm = TRUE)
+  )
+
+# View the summary
+print(cluster_summary)
+
+###clustering player
+
+##different clusters using Principle Component
+
+4 - Intermediate Performers
+3 - Elites
+2 - Low Performers
+1 - High Performers
+```
