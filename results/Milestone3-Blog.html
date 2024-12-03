@@ -78,13 +78,32 @@ ul.task-list li input[type="checkbox"] {
 </section>
 <section id="plotsmodeling-output-connection-to-our-questions" class="level2">
 <h2 class="anchored" data-anchor-id="plotsmodeling-output-connection-to-our-questions">Plots/Modeling output &amp; Connection to our questions</h2>
-<p>![Hanna’s Viz](kills.png)</p>
-<p>![Kudzai’s Viz](survival.png)</p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="kills.png" class="img-fluid figure-img"></p>
+<figcaption>Hanna’s Viz</figcaption>
+</figure>
+</div>
+<p>This visualization generally shows whether total kills and damage rates have any type of relationship per each weapon, for a single sample player. From the above plot, we can see that they have a moderately strong positive correlation.</p>
+<p>This suggests that higher damage with a weapon is often associated with a higher kill count, indicating that weapon effectiveness could be a stronger predictor of a player’s success. By incorporating mastery levels and playstyle, you could refine predictive models for kill counts, win probabilities, and survival times. Furthermore, this data can also be expanded by stratifying it by game modes (solo, duo, squad). For instance, it would help identify whether the correlation between damage and kills is stronger in team modes (where players may rely on coordinated attacks) versus solo modes. This might reveal differences in weapon mastery and playstyle effectiveness across modes.</p>
+<p>While this chart does not directly relate to hot-drop behaviors, a similar analysis could be conducted to compare damage and kills across different landing zones to identify high-risk, high-reward areas and their impact on player performance.</p>
+<p>This chart’s insights could form the basis of a broader analysis addressing these questions by integrating additional variables like game modes, location data, and historical trends.</p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="survival.png" class="img-fluid figure-img"></p>
+<figcaption>Kudzai_Viz</figcaption>
+</figure>
+</div>
 <p>This visualization explores how well players perform across different game modes, classified into two main categories: Solo Play and Team Play. The first heatmap shows win rates, while the second focuses on survival rates.</p>
 <p>From the heatmap, we observe that win rates are generally higher for team-based play compared to solo play. This suggests that players benefit from teamwork, which likely enhances coordination and overall performance, leading to more frequent victories.</p>
 <p>However, when it comes to survival rates—a measure of how long players last before being killed—we notice a different trend. Players in solo modes tend to have comparable or even slightly better survival rates in some cases. This could indicate that in solo modes, players adopt a more cautious or defensive playstyle, focusing on surviving as long as possible without relying on team support. Conversely, team play may encourage more aggressive strategies, where players take risks knowing they have teammates to back them up.</p>
 <p>These patterns highlight the trade-offs between the two categories: team play offers better odds of winning, while solo play may encourage more strategic survival.</p>
-<p>![Tam’s Viz](knocks.png)</p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="knocks.png" class="img-fluid figure-img"></p>
+<figcaption>Tam’s Viz</figcaption>
+</figure>
+</div>
 <p>This visualization is a boxplot that shows a positive relationship between the amount of damage a player dealt and the number of knocks they made, which makes sense because a large damage has to be made in order to get another player knocked.</p>
 <p>For context, when a player is hit and runs out of their current HP, they are knocked. During this time, they are incapable of performing any activities other than crawling on the ground and waiting for their teammate to come and revive them. If no one comes and the countdown finishes, the player will be officially eliminated.</p>
 <p>We hypothesize that a greater number of knocks mean a player is confident in his skills and is more likely to participate in combats, or even becomes proactive in hunting down their enemies. This can go both ways. If someone has a tendency to participate in combats, they have a higher likelihood to be hit and eliminated or, in contrast, because they are skilful and can instead eliminate most other players, they are more likely to make one of the top spots. Another possibility is that if someone refrains from combat and hides themselves really well, it is probable they make it deep into the match. For this reason, a further comparison between survival time and number of knocks can tell us which of these possibilities is more likely to happen, or it will be different depending on game mode.</p>

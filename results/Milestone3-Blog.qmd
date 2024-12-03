@@ -26,9 +26,17 @@ Finally, the weapon mastery allows players to observe a preferred game-play thro
 
 ## Plots/Modeling output & Connection to our questions
 
-\![Hanna's Viz\](kills.png)
+![Hanna's Viz](kills.png)
 
-\![Kudzai's Viz\](survival.png)
+This visualization generally shows whether total kills and damage rates have any type of relationship per each weapon, for a single sample player. From the above plot, we can see that they have a moderately strong positive correlation.
+
+This suggests that higher damage with a weapon is often associated with a higher kill count, indicating that weapon effectiveness could be a stronger predictor of a player’s success. By incorporating mastery levels and playstyle, you could refine predictive models for kill counts, win probabilities, and survival times. Furthermore, this data can also be expanded by stratifying it by game modes (solo, duo, squad). For instance, it would help identify whether the correlation between damage and kills is stronger in team modes (where players may rely on coordinated attacks) versus solo modes. This might reveal differences in weapon mastery and playstyle effectiveness across modes.
+
+While this chart does not directly relate to hot-drop behaviors, a similar analysis could be conducted to compare damage and kills across different landing zones to identify high-risk, high-reward areas and their impact on player performance.
+
+This chart's insights could form the basis of a broader analysis addressing these questions by integrating additional variables like game modes, location data, and historical trends.
+
+![Kudzai_Viz](survival.png)
 
 This visualization explores how well players perform across different game modes, classified into two main categories: Solo Play and Team Play. The first heatmap shows win rates, while the second focuses on survival rates.
 
@@ -38,7 +46,7 @@ However, when it comes to survival rates—a measure of how long players last be
 
 These patterns highlight the trade-offs between the two categories: team play offers better odds of winning, while solo play may encourage more strategic survival.
 
-\![Tam's Viz\](knocks.png)
+![Tam's Viz](knocks.png)
 
 This visualization is a boxplot that shows a positive relationship between the amount of damage a player dealt and the number of knocks they made, which makes sense because a large damage has to be made in order to get another player knocked.
 
