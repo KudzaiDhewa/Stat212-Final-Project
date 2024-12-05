@@ -78,7 +78,7 @@ sampleWeaponsDF <- map2_dfr(sampleWeaponsNames, sampleWeaponsSumm, ~{
 ### Flatten data
 
 Split each `StatsTotal`, `OfficialStatsTotal`, and `CompetitiveStatsTotal` lists from `sampleWeaponsDF` into separate columns
-```{r}
+```{r, warning=FALSE, error=FALSE, eval=FALSE}
 flattenStats <- function(stats_list) {
   map_dfr(stats_list, ~ as.data.frame(t(unlist(.x)), stringsAsFactors = FALSE))
 }
@@ -117,7 +117,7 @@ sampleWeaponsDF <- unique_names %>%
 ```
 
 ### Data cleaning 2
-```{r}
+```{r, eval=FALSE}
 sampleWeaponsDF <- sampleWeaponsDF %>%
   select(-Medals)
 
@@ -128,7 +128,7 @@ sampleWeaponsDF$weapon <- gsub("Item_Weapon_", "", sampleWeaponsDF$weapon) %>%
 
 ## BATCH PLAYERS
 ### Function
-```{r}
+```{r, eval=FALSE}
 # Function to get weapons mastery for all players in the playerID list and compile as a list of dataframes
 urls <- paste("https://api.pubg.com/shards/steam/players/",playerID$playerId,"/weapon_mastery", sep = "")
 
@@ -196,14 +196,14 @@ clean_weapons_data <- function(playerWeapons) {
 }
 
 # Get all players weapons mastery
-allPlayersWeapons <- get_all_players_weapons(playerID, api_key) %>%
-  clean_weapons_data()
+# allPlayersWeapons <- get_all_players_weapons(playerID, api_key) %>%
+#   clean_weapons_data()
 ```
 
 ### All players' weapons mastery data combined
 
 ## Data viz
-```{r}
+```{r, eval=FALSE}
 library(ggplot2)
 library(gapminder)
 theme_set(theme_bw())
