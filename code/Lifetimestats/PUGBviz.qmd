@@ -15,6 +15,12 @@ library(ggplot2)
 library(plotly)
 library(tidyr)
 library(patchwork)
+library(cluster)
+library(factoextra)
+
+#read in data
+lifetimestats <- read_csv("../course_project/final_lifetime_stats2.csv")
+
 ```
 
 ## Running Code
@@ -25,6 +31,10 @@ When you click the **Render** button a document will be generated that includes 
 
 ggplot(lifetimestats, aes(x= gameMode, y = roundsPlayed)) + geom_col() + theme_minimal()
 
+
+###heatmaps 
+
+final_data <- lifetimestats
 win_rate_data <- final_data %>%
   group_by(gameMode) %>%
   summarise(
@@ -87,8 +97,6 @@ names(lifetimestats)
 The `echo: false` option disables the printing of code (only output is displayed).
 
 ```{r}
-library(ggplot2)
-library(dplyr)
 
 # Calculate average assists and revives per game mode
 teamwork_data <- lifetimestats %>%
@@ -136,8 +144,6 @@ ggplot(distance_data, aes(x = gameMode)) +
 ```
 
 ```{r}
-library(ggplot2)
-library(dplyr)
 
 # Calculate top10 rate (top 10 finishes / rounds played) by game mode
 top10_rate <- lifetimestats %>%
@@ -174,13 +180,20 @@ ggplot(top10_rate, aes(y= gameMode, x = top10_rate, fill = gameMode)) +
 ```
 
 ```{r}
-library(cluster)
-library(factoextra)
-```
+##clustering using principle component analysis
 
-```{r}
-cluster_data <- final_data %>%
-  select(kills, assists, damageDealt, timeSurvived, wins)
+lifetime <- lifetime %>%
+  mutate(uniqueId = make.unique(as.character(accountId)))
+
+cluster_data <- lifetime 
+
+rownames(cluster_data) <- NULL
+
+names(cluster_data)
+
+cluster_data <- cluster_data %>%
+  column_to_rownames("uniqueId") %>%
+      select(kills, assists,damageDealt,timeSurvived, wins)
 
 head(cluster_data)
 
@@ -190,8 +203,8 @@ cluster_data_scaled <- scale(cluster_data)
 head(cluster_data_scaled)
 
 ##elbow method to find the optimum number of clusters
-fviz_nbclust(cluster_data_scaled, kmeans, method = "wss")  +
-  labs(title = "Elbow Method for Optimal Clusters")
+# fviz_nbclust(cluster_data_scaled, kmeans, method = "wss")  +
+#   labs(title = "Elbow Method for Optimal Clusters")
 ```
 
 ```{r}
@@ -201,15 +214,29 @@ k <- 4
 # Run k-means clustering
 kmeans_result <- kmeans(cluster_data_scaled, centers = k, nstart = 25)
 
+kmeans_result
+
 # Add cluster assignments to the original data
 cluster_data$cluster <- as.factor(kmeans_result$cluster)
 
 # View cluster assignments
 head(cluster_data)
 
+cluster_data2 <- cluster_data %>%
+  rownames_to_column("uniqueId")
+
+
+clustered_players <- cluster_data2 %>%
+  select(uniqueId,cluster) %>%
+  inner_join(lifetime, by = "uniqueId") %>%
+  select(-uniqueId)
+
+write.csv(clustered_players, "clustered_players.csv", row.names = FALSE)
+
 ```
 
 ```{r}
+
 # Perform PCA for visualization
 pca_result <- prcomp(cluster_data_scaled, center = TRUE, scale. = TRUE)
 
@@ -223,7 +250,8 @@ ggplot(pca_data, aes(x = PC1, y = PC2, color = cluster)) +
   labs(title = "Player Clusters (PCA)", x = "Principal Component 1", y = "Principal Component 2") +
   theme_minimal()
 
-
+##score plot
+#fviz_pca_ind(pca_candy, repel = TRUE)
 ```
 
 ```{r}
@@ -245,8 +273,16 @@ print(cluster_summary)
 
 ##different clusters using Principle Component
 
-4 - Intermediate Performers
-3 - Elites
-2 - Low Performers
-1 - High Performers
+# 4 - Intermediate Performers
+# 3 - Beginners
+# 2 - High performers
+# 1 - Elite performers
+```
+
+```{r}
+###density plot
+
+ggplot(data = clustered_players, aes(x = days, fill = cluster)) + geom_density(alpha = 0.6) + xlim(0,1000) + ylim(0,0.02)
+
+
 ```

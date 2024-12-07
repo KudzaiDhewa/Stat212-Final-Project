@@ -13,9 +13,8 @@ Quarto enables you to weave together content and executable code into a finished
 When you click the **Render** button a document will be generated that includes both content and the output of embedded code. You can embed code like this:
 
 ```{r}
-library(httr) # making HTTP requests to web APIs and web servers
-library(jsonlite) #to read json files
-library(urltools)
+library(httr) 
+library(jsonlite) 
 library(tidyverse)
 library(purrr)
 
@@ -38,6 +37,12 @@ api_key <- "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJqdGkiOiJhOGVkYjBkMC03N2IxLTA
 ###set system sleep for a while when pulling the data
 ###use the endpoint where you can pull data in groups of ten
 ## and know rate limit to do this.
+####get lifetime stats for the first 10 000 players.
+
+###use the function where i can pull for 10 players a time for each game mode. That way I can have for the same set of players 
+## might take me 10 hours
+### find a way to optimise this. Can you pause a pull request. 
+
 
 get_lifetime_stats <- function(account_id, platform = "steam", api_key) {
   # Base URL and endpoint construction
@@ -119,9 +124,7 @@ player_stats10 <- get_lifetime_stats("account.de42b63d95dc48f1ae047882c0ffd351",
 head(player_stats10)
 
 
-combined_dataframe <- bind_rows(player_stats1,player_stats2,player_stats3,player_stats,player_stats5,player_stats6,player_stats7,player_stats8,player_stats9,player_stats10)
 
-names(combined_dataframe)
 
 
 ###read in the data
@@ -130,16 +133,21 @@ names(combined_dataframe)
 
 ```{r}
 # List of account IDs to process
-account_ids <- player_ids$playerId %>% head(500) # Replace with actual account IDs
+##might want to do 5 requests per minutes
 
+account_ids <- player_ids$playerId %>% head(3000) # Replace with actual account IDs
+ 
+account_ids2 <- player_ids$playerId[3001:10000]
 
 # Initialize an empty list to store the results
 all_player_data <- list()
 
 # Loop through the account IDs in chunks of 10
-for (i in seq(1, length(account_ids), by = 10)) {
+##I might have to change this to 5 
+
+for (i in seq(1, length(account_ids), by = 5)) {
   # Extract the current chunk of up to 10 account IDs
-  chunk <- account_ids[i:base::min(i + 9, length(account_ids))]
+  chunk <- account_ids[i:base::min(i + 4, length(account_ids))]
   
   # Process each account ID in the chunk
   for (account_id in chunk) {
@@ -155,7 +163,7 @@ for (i in seq(1, length(account_ids), by = 10)) {
   }
   
   # Pause for 60 seconds after each chunk of 10 players, except the last chunk
-  if (i + 9 < length(account_ids)) {
+  if (i + 4 < length(account_ids)) {
     cat("Rate limit reached. Pausing for 60 seconds...\n")
     Sys.sleep(60)  # Pause for 60 seconds
   }
@@ -167,11 +175,52 @@ final_data <- do.call(rbind, all_player_data)
 # View the resulting data
 print(final_data)
 
-write.csv(final_data, "final_lifetime_stats.csv", row.names = FALSE)
+write.csv(final_data, "final_lifetime_stats2.csv", row.names = FALSE)
 
 ```
 
-##### Exploring teamwork through PUBG.
+```{r}
+## account ids from 3001 to 10000
+
+all_player_data <- list()
+
+# Loop through the account IDs in chunks of 10
+##I might have to change this to 5 
+
+for (i in seq(1, length(account_ids2), by = 5)) {
+  # Extract the current chunk of up to 10 account IDs
+  chunk <- account_ids2[i:base::min(i + 4, length(account_ids2))]
+  
+  # Process each account ID in the chunk
+  for (account_id in chunk) {
+    cat("Processing account:", account_id, "\n")
+    
+    # Fetch lifetime stats
+    player_data <- get_lifetime_stats(account_id, api_key = api_key)
+    
+    # Store the data
+    if (!is.null(player_data)) {
+      all_player_data[[account_id]] <- player_data
+    }
+  }
+  
+  # Pause for 60 seconds after each chunk of 10 players, except the last chunk
+  if (i + 4 < length(account_ids2)) {
+    cat("Rate limit reached. Pausing for 60 seconds...\n")
+    Sys.sleep(60)  # Pause for 60 seconds
+  }
+}
+
+# Combine all the player data into a single data frame
+final_data2 <- do.call(rbind, all_player_data)
+write.csv(final_data2, "final_lifetime_stats3.csv", row.names = FALSE)
+
+
+
+lifetime <- bind_rows(final_data, final_data2)
+```
+
+## ##Exploring teamwork through PUBG.
 
 ###explore number of wins people get when playing in a group compared to playing solo. Number of revives that they get.
 
@@ -186,22 +235,3 @@ The `echo: false` option disables the printing of code (only output is displayed
 ##use function to get the lifetime stats on these players
 
 ##create a table and a visualization
-
-```{lifetimestats <- read_csv("Data/playerlifetimestats.csv")}
-df %>%
-  mutate(mode_type = ifelse(gameMode == "solo" | gameMode == "solo-fpp", "Solo", "Team")) %>%
-  ggplot(aes(x = mode_type, y = maxKillStreaks)) +
-  geom_boxplot() +
-  labs(title = "Kill Streaks: Solo vs Team", x = "Mode Type", y = "Max Kill Streaks")
-
-```
-
-```{r}
-
-lifetimestats <- read_csv("Data/playerlifetimestats.csv")
-df %>%
-  mutate(mode_type = ifelse(gameMode == "solo" | gameMode == "solo-fpp", "Solo", "Team")) %>%
-  ggplot(aes(x = mode_type, y = maxKillStreaks)) +
-  geom_boxplot() +
-  labs(title = "Kill Streaks: Solo vs Team", x = "Mode Type", y = "Max Kill Streaks")
-```

@@ -6,7 +6,7 @@ editor: visual
 
 Refined research Questions:
 
-**Q1: Player Performance Analysis: Can we predict a player’s success in terms of key performance indicators like kill count, win probability, and survival time, by analyzing mastery levels, playstyle, and historical performance data?**
+**Q1: Player Performance Analysis: Can we predict a player’s success in terms of key performance indicators like kill count, win probability, and survival time, by analyzing mastery levels, play style, and historical performance data?**
 
 **Q2: How does weapon mastery for each player differ for the varying preferred modes (i.e. solo, duo, squad)? Do players perform better playing solo or in teams (duo, squad)?**\
 
