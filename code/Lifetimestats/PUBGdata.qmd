@@ -12,6 +12,12 @@ Quarto enables you to weave together content and executable code into a finished
 
 When you click the **Render** button a document will be generated that includes both content and the output of embedded code. You can embed code like this:
 
+```{r setup}
+#| include: false
+knitr::opts_chunk$set(error=TRUE)
+
+```
+
 ```{r}
 library(httr) 
 library(jsonlite) 
@@ -176,6 +182,8 @@ final_data <- do.call(rbind, all_player_data)
 print(final_data)
 
 write.csv(final_data, "final_lifetime_stats2.csv", row.names = FALSE)
+
+write.csv(lifetime, "PUBGlifetimestats.csv", row.names = FALSE)
 
 ```
 

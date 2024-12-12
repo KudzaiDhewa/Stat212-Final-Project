@@ -102,7 +102,7 @@ combined_plot
 
 
 # Summarize the data to count games played by game mode and cluster
-game_mode_distribution <- final_data %>%
+game_mode_distribution <- clustered_players%>%
   group_by(cluster, gameMode) %>%
   summarise(
     total_games = sum(roundsPlayed, na.rm = TRUE)
@@ -131,7 +131,7 @@ The `echo: false` option disables the printing of code (only output is displayed
 ```{r}
 
 # Calculate average assists and revives per game mode
-teamwork_data <- lifetimestats %>%
+teamwork_data <- lifetime %>%
   group_by(gameMode) %>%
   summarise(
     avg_assists = mean(assists, na.rm = TRUE),
@@ -154,7 +154,7 @@ ggplot(teamwork_data, aes(x = avg_assists, y = avg_revives, color = gameMode)) +
 
 ```{r}
 # Summarize travel distance
-distance_data <- lifetimestats %>%
+distance_data <- lifetime %>%
   group_by(gameMode) %>%
   summarise(
     avg_ride_distance = mean(rideDistance, na.rm = TRUE),
@@ -178,7 +178,7 @@ ggplot(distance_data, aes(x = gameMode)) +
 ```{r}
 
 # Calculate top10 rate (top 10 finishes / rounds played) by game mode
-top10_rate <- lifetimestats %>%
+top10_rate <- lifetime %>%
   group_by(gameMode) %>%
   summarise(
     total_top10s = sum(top10s, na.rm = TRUE),
