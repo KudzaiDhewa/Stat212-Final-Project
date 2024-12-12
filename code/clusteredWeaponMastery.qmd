@@ -1,5 +1,5 @@
 ---
-title: "Weapons Mastery"
+title: "clusterWeaponMastery"
 format: html
 editor: visual
 ---
@@ -12,13 +12,18 @@ library(ggplot2)
 library(dplyr)
 library(tibble)
 library(forcats)
+library(httr)
+library(jsonlite)
 ```
 
 ## Player IDs
 
 ```{r}
 # setwd("~/Desktop/Stat212_Project1/code")
-playerID <- read_csv("../players.csv")
+playerID <- read_csv("../clustered_players.csv")
+playerID <- playerID %>%
+  select(cluster, accountId, playerName) %>%
+  unique()
 ```
 
 ## API
@@ -55,7 +60,7 @@ get_info <- function(url, api_key) {
 ## SAMPLE PLAYER
 
 ```{r}
-samplePlayer <- "account.cfbdfcdb42324279a9f37d62c201c2ae"
+samplePlayer <- playerID$accountId[1]
 ```
 
 ### Weapons mastery
@@ -140,7 +145,7 @@ sampleWeaponsDF$weapon <- gsub("Item_Weapon_", "", sampleWeaponsDF$weapon) %>%
 
 ```{r, eval=FALSE}
 # Function to get weapons mastery for all players in the playerID list and compile as a list of dataframes
-urls <- paste("https://api.pubg.com/shards/steam/players/",playerID$playerId,"/weapon_mastery", sep = "")
+urls <- paste("https://api.pubg.com/shards/steam/players/",playerID$accountId,"/weapon_mastery", sep = "")
 
 # calling all the data wrangling functions from above
 weapon_data <- function(url,api_key){
@@ -228,3 +233,5 @@ allPlayersWeaponsDF %>%
        y = "Average Kills",
        fill = "Player ID")
 ```
+
+
