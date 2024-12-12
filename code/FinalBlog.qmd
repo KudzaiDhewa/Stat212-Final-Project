@@ -5,9 +5,16 @@ editor: visual
 ---
 
 ```{r setup}
-#| include: false
-knitr::opts_chunk$set(error=TRUE)
-
+#| echo: false
+#| warning: false
+knitr::opts_chunk$set(collapse = TRUE, 
+                      warning = FALSE,
+                      message = FALSE,
+                      fig.height = 2.75, 
+                      fig.width = 4.25,
+                      fig.env='figure',
+                      fig.pos = 'h',
+                      fig.align = 'center')
 ```
 
 ## The Game
@@ -18,8 +25,10 @@ knitr::opts_chunk$set(error=TRUE)
 
 Through the players' lifetime statistics, which provide critical insights into their performance throughout their PUBG journey—such as wins, matches played, and survival rates—we decided to use clustering techniques to uncover underlying patterns among the players. Our assumption is that players naturally group into distinct clusters that reflect varying levels of performance in the game.
 
-```{r echo = FALSE}
-
+```{r}
+#| message: false
+#| warning: false
+#| 
 library(tidyverse)
 library(ggplot2)
 library(plotly)
@@ -33,8 +42,9 @@ library(magick)
 lifetime <- read.csv("PUBGlifetimestats.csv")
 ```
 
-```{r eval = FALSE}
-## Make accountID rowname becuase it is identifier and should not be used in clusterng 
+```{r}
+
+## Make accountID rowname because it is identifier and should not be used in clusterng 
 lifetime <- lifetime %>%
   mutate(uniqueId = make.unique(as.character(accountId)))
 
@@ -42,18 +52,13 @@ cluster_data <- lifetime
 
 rownames(cluster_data) <- NULL
 
-names(cluster_data)
-
 cluster_data <- cluster_data %>%
   column_to_rownames("uniqueId") %>%
       select(kills, assists,damageDealt,timeSurvived, wins)
 
-head(cluster_data)
-
-
 ##Normalize the data
 cluster_data_scaled <- scale(cluster_data)
-head(cluster_data_scaled)
+
 
 ##elbow method to find the optimum number of clusters
 # fviz_nbclust(cluster_data_scaled, kmeans, method = "wss")  +
@@ -65,26 +70,20 @@ k <- 4
 # Run k-means clustering
 kmeans_result <- kmeans(cluster_data_scaled, centers = k, nstart = 25)
 
-kmeans_result
-
 # Add cluster assignments to the original data
 cluster_data$cluster <- as.factor(kmeans_result$cluster)
 
-# View cluster assignments
-head(cluster_data)
+```
 
-
+```{r echo = FALSE}
 
 cluster_data2 <- cluster_data %>%
   rownames_to_column("uniqueId")
-
 
 clustered_players <- cluster_data2 %>%
   select(uniqueId,cluster) %>%
   inner_join(lifetime, by = "uniqueId") %>%
   select(-uniqueId)
-
-
 ```
 
 Using the elbow method we found that the optimum number of player clusters for this dataset was 4 and then used k-means clustering to identify these clusters. The further understand what each cluster of players would be we ran summary statistics on each cluster.
@@ -92,7 +91,6 @@ Using the elbow method we found that the optimum number of player clusters for t
 ```{r}
 
 
-cluster_data <- read.csv("cluster_data.csv")
 # Summarize metrics by cluster
 
 cluster_summary <- cluster_data %>%
@@ -129,7 +127,7 @@ Cluster 4 - Intermediate performers
 
 To visualize this clusters on a 2-dimensional plot we decided to make use of a Principle Component Analysis: **Principal Component Analysis (PCA)** reduces the dimensionality of the PUBG player data. PCA helps summarize the variance in the data by creating uncorrelated components (Principal Components) that capture the most important features.
 
-```{r eval = FALSE}
+```{r}
 # Perform PCA for visualization
 pca_result <- prcomp(cluster_data_scaled, center = TRUE, scale. = TRUE)
 
@@ -146,11 +144,6 @@ ggplot(pca_data, aes(x = PC1, y = PC2, color = cluster)) +
 
 ```
 
-```{r}
-image <- image_read("PCA.png")
-print(image)
-```
-
 **Plot Insights**:
 
 -   Players from the same cluster group together, confirming that clustering effectively separated players based on similar performance characteristics.
@@ -159,15 +152,10 @@ print(image)
 
 ##Cluster analysis
 
-```{r eval = FALSE}
+```{r}
 ###density plot
 ggplot(data = clustered_players, aes(x = days, fill = cluster)) + geom_density(alpha = 0.6) + xlim(0,1000) + ylim(0,0.02) + labs(x ="Number of Days ")
 
-```
-
-```{r}
-image <- image_read("density.png")
-print(image)
 ```
 
 Tip number 1: Play the game for longer!!
