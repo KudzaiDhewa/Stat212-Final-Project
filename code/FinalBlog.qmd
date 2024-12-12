@@ -1,0 +1,158 @@
+---
+title: " How to go from Beginner to Elite PUBG Player: The Ultimate data-driven guide"
+format: html
+editor: visual
+---
+
+## The Game
+
+**PUBG (PlayerUnknown's Battlegrounds)** is a popular battle royale game where players compete to be the last one standing on a shrinking map by scavenging for weapons, equipment, and vehicles. Around the world, approximately 30 million people play PUBG daily, both for leisure and in competitive settings. Through a data-driven analysis of PUBG player statistics obtained via the PUBG API, this blog aims to provide actionable insights on how to become an elite PUBG player. Enhancing player performance not only enriches the gaming experience but also fosters increased engagement, as players are more likely to continue playing when they excel. This guide is valuable not only for players but also for game developers, as it offers insights to improve gaming experiences and boost retention and engagement metrics for PUBG and similar battle royale games.
+
+## The Data
+
+Through the player's lifetime statistics which are an indication of player's performance throughout their PUGB journey with critical information such as wins, matches played, survival we decided to using clustering techniques to examine some underlying structure of the players with respect to these statistics. Our assumption being naturally players would be grouped into different clusters which showcase their level of performance in the game.
+
+```{r echo = FALSE}
+library(readr)
+library(tidyverse)
+library(dplyr)
+library(ggplot2)
+library(plotly)
+library(tidyr)
+library(patchwork)
+library(cluster)
+library(factoextra)
+
+##load in lifetimestats 
+lifetime <- read.csv("PUBGlifetimestats.csv")
+```
+
+```{r}
+## Make accountID rowname becuase it is identifier and should not be used in clusterng 
+lifetime <- lifetime %>%
+  mutate(uniqueId = make.unique(as.character(accountId)))
+
+cluster_data <- lifetime 
+
+rownames(cluster_data) <- NULL
+
+names(cluster_data)
+
+cluster_data <- cluster_data %>%
+  column_to_rownames("uniqueId") %>%
+      select(kills, assists,damageDealt,timeSurvived, wins)
+
+head(cluster_data)
+
+
+##Normalize the data
+cluster_data_scaled <- scale(cluster_data)
+head(cluster_data_scaled)
+
+##elbow method to find the optimum number of clusters
+# fviz_nbclust(cluster_data_scaled, kmeans, method = "wss")  +
+#   labs(title = "Elbow Method for Optimal Clusters")
+
+# Set the number of clusters (e.g., k = 3)
+k <- 4
+
+# Run k-means clustering
+kmeans_result <- kmeans(cluster_data_scaled, centers = k, nstart = 25)
+
+kmeans_result
+
+# Add cluster assignments to the original data
+cluster_data$cluster <- as.factor(kmeans_result$cluster)
+
+# View cluster assignments
+head(cluster_data)
+
+cluster_data2 <- cluster_data %>%
+  rownames_to_column("uniqueId")
+
+
+clustered_players <- cluster_data2 %>%
+  select(uniqueId,cluster) %>%
+  inner_join(lifetime, by = "uniqueId") %>%
+  select(-uniqueId)
+
+
+```
+
+Using the elbow method we found that the optimum number of player clusters for this dataset was 4 and then used k-means clustering to identify these clusters. The further understand what each cluster of players would be we ran summary statistics on each cluster.
+
+```{r}
+# Summarize metrics by cluster
+cluster_summary <- cluster_data %>%
+  group_by(cluster) %>%
+  summarize(
+    avg_kills = mean(kills, na.rm = TRUE),
+    avg_assists = mean(assists, na.rm = TRUE),
+    avg_damageDealt = mean(damageDealt, na.rm = TRUE),
+    avg_timeSurvived = mean(timeSurvived, na.rm = TRUE),
+    avg_wins = mean(wins, na.rm = TRUE)
+  )
+
+# View the summary
+print(cluster_summary)
+```
+
+-   **Cluster 1**: This cluster represents moderately skilled players with a good average performance. They achieve a high number of kills (8,785.91 on average) and assists (2,499.36), deal significant damage (1,204,401.24 on average), and survive for a considerable amount of time (438,938.02 on average). Their average win count (395.11) is also solid, reflecting consistent gameplay.
+
+-   **Cluster 2**: This is the cluster of top-tier, elite players. They exhibit exceptional statistics across all metrics, with an extremely high average number of kills (23,655.20), assists (7,292.40), damage dealt (3,195,735.56), and survival time (9,737,637.51). Their average wins (1,034.33) indicate dominant success in matches.
+
+-   **Cluster 3**: This cluster contains beginner or casual players with relatively low stats. They achieve significantly fewer kills (118.76 on average) and assists (27.13), deal minimal damage (16,130.62), and survive for shorter durations (70,101.48 on average). Their average win count (4.08) suggests limited success in the game.
+
+-   **Cluster 4**: This cluster represents intermediate players who are improving but not yet at the elite level. They achieve a moderate number of kills (2,907.45 on average) and assists (826.26), deal a decent amount of damage (405,749.88), and survive for a fair duration (1,630,512.28 on average). Their average win count (128.06) suggests steady game-play with room for improvement.
+
+In short
+
+Cluster 1 - Higher performers
+
+Cluster 2 - Elite performers
+
+Cluster 3 - Beginners
+
+Cluster 4 - Intermediate performers
+
+To visualize this clusters on a 2-dimensional plot we decided to make use of a Principle Component Analysis: **Principal Component Analysis (PCA)** reduces the dimensionality of the PUBG player data. PCA helps summarize the variance in the data by creating uncorrelated components (Principal Components) that capture the most important features.
+
+```{r echo = FALSE}
+# Perform PCA for visualization
+pca_result <- prcomp(cluster_data_scaled, center = TRUE, scale. = TRUE)
+
+# Create a data frame for plotting
+pca_data <- as.data.frame(pca_result$x[, 1:2])
+pca_data$cluster <- cluster_data$cluster
+
+# Plot the clusters
+ggplot(pca_data, aes(x = PC1, y = PC2, color = cluster)) +
+  geom_point(size = 3, alpha = 0.7) +
+  labs(title = "Player Clusters (PCA)", x = "Principal Component 1", y = "Principal Component 2") +
+  theme_minimal()
+
+
+```
+
+**Plot Insights**:
+
+-   Players from the same cluster group together, confirming that clustering effectively separated players based on similar performance characteristics.
+
+-   Higher values of PC1 correspond to better player performance, aligning with the summary statistics. For example, clusters with the highest average stats are found on the positive side of PC1, while clusters with lower average stats are on the negative side.
+
+##Cluster analysis
+
+```{r}
+###density plot
+
+ggplot(data = clustered_players, aes(x = days, fill = cluster)) + geom_density(alpha = 0.6) + xlim(0,1000) + ylim(0,0.02)
+
+```
+
+Tip number 1: Play the game for longer!!
+
+Based on the density plot above we can see the progression from beginner to elite players, with Cluster 3 being the least engaged and Cluster 2 being the most engaged in terms of days played. And therefore The number of days played correlates positively with skill level and performance, as clusters with more days (e.g., Cluster 2) exhibit higher performance stats. The more consistency and the longer you play the more experience and the better you become. It's a no brainer!
+
+```{r}
+
+```
