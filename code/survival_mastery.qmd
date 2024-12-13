@@ -1,10 +1,11 @@
 ---
 title: "survival_mastery"
+author: "Tam Nguyen"
 format: html
 editor: visual
 ---
 
-```{r}
+```{r libs}
 library(tidyverse)
 library(httr) # making HTTP requests to web APIs and web servers
 library(jsonlite) #to read json files
@@ -14,11 +15,11 @@ library(dplyr)
 library(readr)
 ```
 
-```{r api call}
+```{r functions}
 
 get_info <- function(url, api_key){
   Sys.sleep(6)
-  responsev <- GET(url, add_headers(`Authorization` = paste("Bearer", api_key),
+  response <- GET(url, add_headers(`Authorization` = paste("Bearer", api_key),
                                   `Accept` = "application/vnd.api+json"))
 
 # Check for a successful response
@@ -36,83 +37,279 @@ if (status_code(response) == 200) {
   return(data)
 }
 
+
+
+multi_player_info_fetch <- function(seasonId, players){
+  
+
+  Sys.sleep(6)
+  players_str = str_c(players, collapse = ",")
+  url <- paste0("https://api.pubg.com/shards/steam/seasons/", seasonId, "/gameMode/squad/players?filter[playerIds]=", players_str) 
+  
+  print(url)
+  
+  data_temp_multi <- get_info(url, api_key)
+  return(data_temp_multi$data$attributes$gameModeStats$squad)
+  
+  
+}
 ```
 
-```{r api key}
-api_key <- "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJqdGkiOiJlNjI0NjI4MC03MjMyLTAxM2QtOGU4MS0yMjViNDYzNmQwYzgiLCJpc3MiOiJnYW1lbG9ja2VyIi"
-```
-
-```{r}
-url_season <- "https://api.pubg.com/shards/steam/seasons"
-
-
-season_data <- get_info(url_season, api_key)
-```
-
-```{r season ID}
-url_season <- "https://api.pubg.com/shards/steam/seasons"
-
-
-season_data <- get_info(url_season, api_key)
+```{r api_key}
+api_key <- "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJqdGkiOiJlNjI0NjI4MC03MjMyLTAxM2QtOGU4MS0yMjViNDYzNmQwYzgiLCJpc3MiOiJnYW1lbG9ja2VyIiwiaWF0IjoxNzI5NTUzNjUxLCJwdWIiOiJibHVlaG9sZSIsInRpdGxlIjoicHViZyIsImFwcCI6InB1YmdfYXBpXzIifQ.TPRaU-Yrrai0kza1Wb8-Kg8gBIy__hz37cStm24B1xI"
 
 ```
 
-```{r}
-survival_url_head <- "https://api.pubg.com/shards/steam/players/"
-```
+```{r season_ID}
+# url_season <- "https://api.pubg.com/shards/steam/seasons"
+# season_data <- get_info(url_season, api_key)
 
-```{r load player id}
-
-player_id <- read_csv("../data/players.csv")
-
-all <- player_id %>% pull()
-
-first_10000 <- all[1:10000]
-
-length(first_10000)
-
-first_10000[1:10]
-```
-
-```{r get matches}
-
-url_match <- "https://api.pubg.com/shards/steam/samples"
-
-match_data <- get_info(url_match, api_key)
-
-match_data
 ```
 
 ```{r}
-# Define API key and endpoint
-match_id <- "b46728f2-ba73-45e9-a29b-ba6676ef23a6"  # Replace with a valid match ID
-url <- paste0("https://api.pubg.com/shards/steam", "/matches/", match_id)
-
-# API request headers
-headers <- add_headers(
-  Authorization = paste("Bearer", api_key),
-  Accept = "application/vnd.api+json"
-)
-
-# Fetch match data
-response <- GET(url, headers)
-match_data <- content(response, as = "parsed", type = "application/json")
-
-# Extract telemetry URL
-telemetry_url <- match_data$data$relationships$assets$data[[1]]$id
-print(paste("Telemetry URL:", telemetry_url))
+# seasons <- season_data$data %>% 
+#   select(id) %>% 
+#   write_csv("../seasons.csv")
+#   
+# 
+# seasons
 ```
 
 ```{r}
-#process url
+# player_season_stats_url <- "https://api.pubg.com/shards/steam/players/account.1532a51b64104c089a027ad4c74bab18/seasons/division.bro.official.pc-2018-33/"
+```
 
-url_all <- str_c(survival_url_head, "account.477a1c860f7f4820b87a02571c9f8c29", "/survival_mastery")
+```{r}
+# multi_player_season_stats_url <- "https://api.pubg.com/shards/steam/seasons/division.bro.official.pc-2018-33/gameMode/squad/players?filter[playerIds]=account.9bfc08014e414e1aad39bfceb95e0435,account.e87e3239d3f94ae6a7484a4a4a9c62ea,account.998b828f4c204f00bb648c1658b15669"
+```
+
+```{r}
+# data_temp <- get_info(player_season_stats_url, api_key)
+# data_temp
+```
+
+```{r}
+# data_temp_multi <- get_info(multi_player_season_stats_url, api_key)
+# data_temp_multi
+```
+
+```{r}
+# data_temp_multi$data$attributes$gameModeStats$squad
+```
+
+```{r}
+# data_temp_multi$data$relationships$player$data$id
+```
+
+```{r}
+#total data for given season
+data.frame(data_temp$data$attributes$gameModeStats$squad)
+# todo: add playerid and season id to the data, vars of interest may be boosts, damagedealt, daily kills, heashots, longestKill (maybe sniper),longestSurvivalTime,  rideDistance, revives,  swimDistance, timeSurvived, walkDistance, weaponsAcquired
+
+```
+
+```{r cluster_ids}
+
+player_cluster <- read_csv("../clustered_players.csv") %>% 
+  filter(gameMode == "squad") %>% 
+  select(cluster, accountId)
 
 
-data <- get_info(url_all, api_key)
-data
+player_lvls <- data.frame(list(
+  cluster = c(1, 2, 3, 4),
+  level = c("Pro", "Good", "Beginner", "Intermediate")
+))
+
+player_cluster %>% 
+  distinct(accountId)
+```
+
+```{r}
+test_ids <- player_cluster %>% pull(accountId)
+
+test_ids <- test_ids[1:10]
+
+id_df <- as.data.frame(test_ids)
+```
+
+```{r}
+df <- multi_player_info_fetch("division.bro.official.pc-2018-33", test_ids)
+df
+```
+
+```{r}
+last_6_seasons <- seasons[1:6]
+last_6_seasons
+```
+
+```{r}
+season_1 <- read_csv("../data/seasonal_data_1.csv") %>% 
+            filter(roundsPlayed > 0) %>% 
+            left_join(player_lvls, by = "cluster") %>% 
+            mutate(season = "n")
+
+season_2 <- read_csv("../data/seasonal_data_2.csv") %>% 
+            filter(roundsPlayed > 0) %>% 
+            left_join(player_lvls, by = "cluster")%>% 
+            mutate(season = "n-1")
+
+season_3 <- read_csv("../data/seasonal_data_3.csv") %>% 
+            filter(roundsPlayed > 0) %>% 
+            left_join(player_lvls, by = "cluster")%>% 
+            mutate(season = "n-2")
+
+season_4 <- read_csv("../data/seasonal_data_4.csv") %>% 
+            filter(roundsPlayed > 0) %>% 
+            left_join(player_lvls, by = "cluster") %>% 
+            mutate(season = "n-3")
+
+season_5 <- read_csv("../data/seasonal_data_5.csv") %>% 
+            filter(roundsPlayed > 0) %>% 
+            left_join(player_lvls, by = "cluster")%>% 
+            mutate(season = "n-4")
+
+season_6 <- read_csv("../data/seasonal_data_6.csv") %>% 
+            filter(roundsPlayed > 0) %>% 
+            left_join(player_lvls, by = "cluster")%>% 
+            mutate(season = "n-5")
+
+```
+
+```{r}
+seasons <- list(season_1,season_2,season_3, season_4, season_5, season_6)
+df_init <- data.frame()
+
+for (df in seasons){
+  
+  df_init <- bind_rows(df_init, df)
+  
+}
+
+
+df_all_seasons <- df_init 
+
+df_all_seasons
+```
+
+```{r}
+#ride distance: pro players tend to use vehicles to hunt.
+df_all_seasons %>% 
+  mutate(avg_rideDist = rideDistance/roundsPlayed) %>% 
+  ggplot(aes(x = as.factor(cluster), y = avg_rideDist))+
+  geom_boxplot()+
+  facet_wrap(~season)
+
+
+
+```
+
+```{r}
+season_1 %>% 
+  filter(roundsPlayed != 0) %>% 
+  mutate(avg_wDist = walkDistance/roundsPlayed) %>% 
+  ggplot(aes(x = as.factor(cluster), y = avg_wDist)) +
+  geom_boxplot()
+```
+
+```{r functions}
+
+trendlines <- function(data, var){
+  data %>% 
+  ggplot(aes(y = timeSurvived/roundsPlayed, x = {{var}}/roundsPlayed, color = level))+
+  geom_point()+
+  geom_smooth(method = "lm")+
+  facet_wrap(~season)
+  
+}
+
+draw_round_avg <- function(data,var){
+  data %>%
+    mutate(avg = {{var}}/roundsPlayed) %>% 
+    ggplot(aes(x = fct_rev(fct_reorder(level, avg)), y = avg))+
+    geom_boxplot()
+  
+}
+
+
+draw_overall <- function(data, var){
+  data %>% 
+    ggplot(aes(x = fct_rev(fct_reorder(level, {{var}})), y = {{var}})) +
+    geom_boxplot()+
+    facet_wrap(~season)
+}
+
+```
+
+```{r win_loss_ratio}
+
+draw_round_avg(df_all_seasons, wins)
+# win ratio good - pro-intermediate-beginner
+#loss ratio: is the rev
+```
+
+```{r}
+draw_overall(df_all_seasons, top10s) #experienced players tend to have more losses in the season. There can be several factors: sample space is small (4k out of 65k players). Second reason is ranking is not considered. The higher ranks are harder to win. This is those are some of the limitations in the data
+
+```
+
+```{r}
+df_all_seasons %>% 
+  ggplot(aes(y = timeSurvived/roundsPlayed, x = rideDistance/roundsPlayed, color = level))+
+  geom_point()+
+  geom_smooth(method = "lm")+
+  facet_wrap(~season)
+
+#ride and walk same correlation with timesurvived -> you will have to constantly move. Staying at one place doesn't increase your chance of survival. When segmented by level, the smooth line for beginners almost always had the smallest slope. Players classified as good have highest, pro and intermediate are almost the same in the middle.
+```
+
+```{r}
+df_all_seasons %>% 
+  ggplot(aes(x = swimDistance/roundsPlayed, y = timeSurvived/roundsPlayed, color = level))+
+  geom_point()+
+  geom_smooth(method = "lm")+
+  facet_wrap(~season)
+
+# =>the less you swim, the better. Also, beginners tend to have more outliers than other people.
+```
+
+```{r}
+df_all_seasons %>% 
+  ggplot(aes(x = boosts/roundsPlayed, y = timeSurvived/roundsPlayed, color = level))+
+  # geom_point()+
+  geom_smooth(method = "lm")+
+  facet_wrap(~season)
+
+#the pattern here is interesting: the more boosts the pro players take, the less likely they are to survive. may this be that since they are they are more likely to engage in combat?
+```
+
+```{r}
+df_all_seasons %>% 
+  ggplot(aes(x = weaponsAcquired/roundsPlayed, y = timeSurvived/roundsPlayed, color = level))+
+  # geom_point()+
+  geom_smooth(method = "lm")+
+  facet_wrap(~season)
+```
+
+```{r}
+df_all_seasons %>% 
+  ggplot(aes(x = kills/roundsPlayed, y = timeSurvived/roundsPlayed, color = level))+
+  # geom_point()+
+  geom_smooth(method = "lm")+
+  facet_wrap(~season)
+```
+
+```{r}
+season_1 %>% 
+  ggplot(aes(x = vehicleDestroys/roundsPlayed, y = timeSurvived/roundsPlayed))+
+  geom_point()+
+  geom_smooth()
 ```
 
 ```{r}
 
+df_all_seasons %>% 
+  ggplot(aes(x = dBNOs/roundsPlayed, y = timeSurvived/roundsPlayed, color = level))+
+  # geom_point()+
+  geom_smooth(method = "lm")+
+  facet_wrap(~season)
 ```
