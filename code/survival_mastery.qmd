@@ -117,24 +117,11 @@ player_cluster <- read_csv("../clustered_players.csv") %>%
 
 player_lvls <- data.frame(list(
   cluster = c(1, 2, 3, 4),
-  level = c("Pro", "Good", "Beginner", "Intermediate")
+  level = c( "Good", "Pro" ,"Beginner", "Intermediate")
 ))
 
 player_cluster %>% 
   distinct(accountId)
-```
-
-```{r}
-test_ids <- player_cluster %>% pull(accountId)
-
-test_ids <- test_ids[1:10]
-
-id_df <- as.data.frame(test_ids)
-```
-
-```{r}
-df <- multi_player_info_fetch("division.bro.official.pc-2018-33", test_ids)
-df
 ```
 
 ```{r}
@@ -198,9 +185,6 @@ df_all_seasons %>%
   ggplot(aes(x = as.factor(cluster), y = avg_rideDist))+
   geom_boxplot()+
   facet_wrap(~season)
-
-
-
 ```
 
 ```{r}
@@ -226,7 +210,8 @@ draw_round_avg <- function(data,var){
   data %>%
     mutate(avg = {{var}}/roundsPlayed) %>% 
     ggplot(aes(x = fct_rev(fct_reorder(level, avg)), y = avg))+
-    geom_boxplot()
+    geom_boxplot()+
+    facet_wrap(~season)
   
 }
 
@@ -242,34 +227,208 @@ draw_overall <- function(data, var){
 
 ```{r win_loss_ratio}
 
-draw_round_avg(df_all_seasons, wins)
-# win ratio good - pro-intermediate-beginner
-#loss ratio: is the rev
+df_all_seasons %>% 
+  write_csv("../seasonal_survival_data.csv")
 ```
 
 ```{r}
-draw_overall(df_all_seasons, top10s) #experienced players tend to have more losses in the season. There can be several factors: sample space is small (4k out of 65k players). Second reason is ranking is not considered. The higher ranks are harder to win. This is those are some of the limitations in the data
+df_all_seasons %>%
+    mutate(avg = wins/roundsPlayed) %>% 
+    filter(avg < 0.5) %>% 
+    ggplot(aes(x = fct_rev(fct_reorder(level, avg)), y = avg))+
+    geom_boxplot()+
+    facet_wrap(~season) +
+    theme_classic() +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1),
+          panel.grid.major.x = element_blank())+
+    labs( y = "win ratio",
+          x = "",
+          title = "Boxplots of Win Ratio by Player Level Across Seasons",
+          subtitle = "*outliers have been removed from plot (<0.5)")
+
+    
+```
+
+```{r}
+df_all_seasons %>%
+    mutate(avg = losses/roundsPlayed) %>% 
+    filter(avg > 0.7) %>%
+    ggplot(aes(x = fct_rev(fct_reorder(level, avg)), y = avg))+
+    geom_boxplot()+
+    facet_wrap(~season) +
+    theme_classic()+
+    theme(axis.text.x = element_text(angle = 45, hjust = 1))+
+    labs( y = "loss ratio",
+          x = "",
+          title = "Boxplots of Loss Ratio by Player Level Across Seasons",
+           subtitle = "*outliers have been removed from plot (>0.7)")
+```
+
+Observations:
+
+-   The ratio plots match our expectation in terms of player expertise, that is, pro and good players are shown to have higher win ratio medians whereas immediate and beginner players are on the lower end. In contrast, the beginners and intermediates observe higher loss ratios.
+
+-   Pro and good players are less likely to have outliers.
+
+    ```{r}
+    df_all_seasons %>%
+        mutate(avg = losses/roundsPlayed) %>% 
+        filter(avg > 0.7) %>%
+        ggplot(aes(x = fct_rev(fct_reorder(level, avg)), y = avg))+
+        geom_boxplot()+
+        facet_wrap(~season) +
+        theme_classic()+
+        theme(axis.text.x = element_text(angle = 45, hjust = 1))+
+        labs( y = "loss ratio",
+              x = "",
+              title = "Boxplots of Loss Ratio by Player Level Across Seasons",
+               subtitle = "*outliers have been removed from plot (>0.7)")
+    ```
+
+-   Win ratios tend to be a lot smaller than loss ratios. This makes sense because winning a match tends to be harder than losing a match, even for skillful players.
+
+-   These trends stay consistently over the course of 6 seasons (each lasts for 2 months, so it remains almost static during the span of 1 year)
+
+Conclusion: It appears that our PCA model has successfully grouped players based on relevant indicators. The trends over the 6 seasons sync up with how we expect high level players to perform. Nonetheless, the boxplots also show that the "good" group outperforms the "excellent" group. Perhaps we will need to rethink how we classify the players during the earlier stage.
+
+```{r}
+df_all_seasons %>% 
+  ggplot(aes(y = timeSurvived/roundsPlayed, x = rideDistance/roundsPlayed))+
+  geom_point()+
+  geom_smooth(method = "lm")+
+  facet_wrap(~season) +
+  theme_classic()+
+  labs(y = "Avg Time Survived per Round",
+       x = "Avg Ride Distance per Round",
+       title = "Plots Showing Correlation between Avg Time Survived and Avg Ride Distance",
+       subtitle = "*ride distance means distance player traveled in a vehicle")
 
 ```
 
 ```{r}
 df_all_seasons %>% 
+  ggplot(aes(y = timeSurvived/roundsPlayed, x = walkDistance/roundsPlayed))+
+  geom_point()+
+  geom_smooth(method = "lm")+
+  facet_wrap(~season) +
+  theme_classic()+
+  labs(y = "Avg Time Survived per Round",
+       x = "Avg Walk Distance per Round",
+       title = "Plots Showing Correlation between Avg Time Survived and Avg Walk Distance",
+       subtitle = "*walk distance means distance player walked")
+```
+
+```{r}
+df_all_seasons %>% 
+  ggplot(aes(x = swimDistance/roundsPlayed, y = timeSurvived/roundsPlayed))+
+  geom_point()+
+  geom_smooth()+
+  facet_wrap(~season) +
+  theme_classic()+
+  labs(y = "Avg Time Survived per Round",
+       x = "Avg Swim Distance per Round",
+       title = "Plots Showing Correlation between Avg Time Survived and Avg Swim Distance",
+       subtitle = "*swim distance means distance player swam")
+
+```
+
+Observations:
+
+-   Average walk and ride distances share the same positive correlation with avg survived time, although they do have different slopes: avg walk distance's slope rises faster.
+
+-   Average swim distance seems to be independent of avg time survived. The trend lines shown in the plots are influenced by a few outliers
+
+Conclusions:
+
+-   The positive correlations mean if one is to survive longer, they will have to be on the move constantly. Within the context of PUGB, you will need to consistantly seek good places to hide or find your enemies and good angles to take them down with your weapon. Always moving also protects you in the sense that your enemies become oblivious to your whereabouts. Staying still at one place typically doesn't help much.
+
+-   The slope of avg walk distance being higher compared to that of avg ride distance may mean that walking is more likely to increase your chance of survival, compared to riding a transportation mode. While riding helps you places faster, and shields you from incoming bullets, it also informs enemies within proximity of your presence. Once they know your presence but you do not know theirs, the chances of you being hunted down and eliminated are high.
+
+-   The apparent independence between swimming and surviving is also noticeable. For context, in a map, there will be bodies of water you will have to tread through. There is infrastructure such as bridges but there are usually enemy teams waiting there, ready to eliminate you at any moment, which we call camping. Swimming almost always takes longer time and you are unable to use weapons under water, which makes you vulnerable to someone on higher ground. Perhaps because of this, swimming more is shown to not correlate with surviving more.
+
+```{r}
+df_all_seasons %>%
+    mutate(avg = rideDistance/roundsPlayed) %>%
+    filter(avg<1000) %>%
+    ggplot(aes(x = fct_rev(fct_reorder(level, avg)), y = avg))+
+    geom_boxplot()+
+    facet_wrap(~season) +
+    theme_classic()+
+    theme(axis.text.x = element_text(angle = 45, hjust = 1))+
+    labs( y = "Avg Ride Distance",
+          x = "",
+          title = "Boxplots of Avg Ride Dist by Player Level Across Seasons",
+           subtitle = "*outliers have been removed from plot (<1000)")
+```
+
+Observation(s):
+
+-   Unlike the win/loss ration plots above, the trend isn't as quite consistent, much of variation happens among the non-beginner groups. However, in general players with experience have a tendency to ride in a car.
+
+```{r}
+df_all_seasons %>%
+    mutate(avg = walkDistance/roundsPlayed) %>%
+    filter(avg<1000) %>%
+    ggplot(aes(x = fct_rev(fct_reorder(level, avg)), y = avg))+
+    geom_boxplot()+
+    facet_wrap(~season) +
+    theme_classic()+
+    theme(axis.text.x = element_text(angle = 45, hjust = 1))+
+    labs( y = "Avg Walk Distance",
+          x = "",
+          title = "Boxplots of Avg Walk Dist by Player Level Across Seasons",
+           subtitle = "*outliers have been removed from plot (<1000)")
+```
+
+Observation:
+
+-   During the n-5th and n-6th seasons, it was clear beginners walked less than the other groups. However, during the most recent 4 seasons they seemed to catch up and to the point where they are pretty much indistinguishable from the more experienced groups
+
+```{r}
+df_all_seasons %>%
+    mutate(avg = swimDistance/roundsPlayed) %>%
+    filter(avg<20) %>%
+    ggplot(aes(x = fct_rev(fct_reorder(level, avg)), y = avg))+
+    geom_boxplot()+
+    facet_wrap(~season) +
+    theme_classic()+
+    theme(axis.text.x = element_text(angle = 45, hjust = 1))+
+    labs( y = "Avg Swim Distance",
+          x = "",
+          title = "Boxplots of Avg Swim Dist by Player Level Across Seasons",
+           subtitle = "*outliers have been removed from plot (<20)")
+```
+
+Observation(s):
+
+-   There does not seem to be any significant difference in the avg swim distance for different player levels. The trend stays almost identical for the last 4 seasons
+
+-   However, it is worth noting that there are far way more outliers for the less skilled groups (intermedite and beginners.
+
+Conclusion:
+
+-   Movement patterns are a useful indicator of experience, particularly for identifying trends like increased car usage among skilled players and the narrowing walking distance gap between beginners and experienced players.
+
+```{=html}
+<!-- -->
+```
+-   Swimming distance appears to have little discriminatory power for classifying player levels due to its uniformity across groups.
+
+-   The presence of more outliers in beginner and intermediate groups highlights their inconsistent gameplay, which could be a distinguishing factor when analyzing player skill levels.
+
+```{r}
+df_all_seasons %>% 
+  filter(level %in% c("Pro", "Beginner")) %>% 
   ggplot(aes(y = timeSurvived/roundsPlayed, x = rideDistance/roundsPlayed, color = level))+
-  geom_point()+
+  # geom_point()+
   geom_smooth(method = "lm")+
-  facet_wrap(~season)
+  facet_wrap(~season) +
+  theme_classic()+
+  labs(y = "Avg Time Survived per Round",
+       x = "Avg Ride Distance per Round",
+       title = "Plots Showing Correlation between Avg Time Survived and Avg Ride Distance",
+       subtitle = "*ride distance means distance player traveled in a vehicle")
 
-#ride and walk same correlation with timesurvived -> you will have to constantly move. Staying at one place doesn't increase your chance of survival. When segmented by level, the smooth line for beginners almost always had the smallest slope. Players classified as good have highest, pro and intermediate are almost the same in the middle.
-```
-
-```{r}
-df_all_seasons %>% 
-  ggplot(aes(x = swimDistance/roundsPlayed, y = timeSurvived/roundsPlayed, color = level))+
-  geom_point()+
-  geom_smooth(method = "lm")+
-  facet_wrap(~season)
-
-# =>the less you swim, the better. Also, beginners tend to have more outliers than other people.
 ```
 
 ```{r}
