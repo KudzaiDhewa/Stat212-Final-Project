@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.4.555">
+<meta name="generator" content="quarto-1.5.57">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
@@ -33,7 +33,7 @@ div.sourceCode { overflow: auto; }
 }
 @media print {
 pre > code.sourceCode { white-space: pre-wrap; }
-pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+pre > code.sourceCode > span { display: inline-block; text-indent: -5em; padding-left: 5em; }
 }
 pre.numberSource code
   { counter-reset: source-line 0; }
@@ -86,6 +86,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 <div class="quarto-title-meta">
 
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Kudzai, Hanna, Tam </p>
+          </div>
+  </div>
     
   
     
@@ -112,9 +118,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(cluster)</span>
 <span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(factoextra)</span>
 <span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(magick)</span>
-<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="do">##load in lifetimestats </span></span>
-<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>lifetime <span class="ot">&lt;-</span> <span class="fu">read.csv</span>(<span class="st">"PUBGlifetimestats.csv"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(readr)</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="do">##load in lifetimestats </span></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>lifetime <span class="ot">&lt;-</span> <span class="fu">read.csv</span>(<span class="st">"PUBGlifetimestats.csv"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <div class="cell" data-layout-align="center">
 <div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a></span>
@@ -150,28 +157,27 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <p>Using the elbow method we found that the optimum number of player clusters for this dataset was 4 and then used k-means clustering to identify these clusters. The further understand what each cluster of players would be we ran summary statistics on each cluster.</p>
 <div class="cell" data-layout-align="center">
 <div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Summarize metrics by cluster</span></span>
-<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>cluster_summary <span class="ot">&lt;-</span> cluster_data <span class="sc">%&gt;%</span></span>
-<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(cluster) <span class="sc">%&gt;%</span></span>
-<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarize</span>(</span>
-<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">avg_kills =</span> <span class="fu">mean</span>(kills, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
-<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">avg_assists =</span> <span class="fu">mean</span>(assists, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
-<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">avg_damageDealt =</span> <span class="fu">mean</span>(damageDealt, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
-<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">avg_timeSurvived =</span> <span class="fu">mean</span>(timeSurvived, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
-<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">avg_wins =</span> <span class="fu">mean</span>(wins, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a><span class="co"># View the summary</span></span>
-<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(cluster_summary)</span>
-<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a><span class="do">## # A tibble: 4 × 6</span></span>
-<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a><span class="do">##   cluster avg_kills avg_assists avg_damageDealt avg_timeSurvived avg_wins</span></span>
-<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a><span class="do">##   &lt;fct&gt;       &lt;dbl&gt;       &lt;dbl&gt;           &lt;dbl&gt;            &lt;dbl&gt;    &lt;dbl&gt;</span></span>
-<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a><span class="do">## 1 1           8786.      2499.         1204401.         4388938.   395.  </span></span>
-<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a><span class="do">## 2 2          23655.      7292.         3195736.         9737638.  1034.  </span></span>
-<span id="cb3-22"><a href="#cb3-22" aria-hidden="true" tabindex="-1"></a><span class="do">## 3 3            119.        27.1          16131.           70101.     4.08</span></span>
-<span id="cb3-23"><a href="#cb3-23" aria-hidden="true" tabindex="-1"></a><span class="do">## 4 4           2907.       826.          405750.         1630512.   128.</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Summarize metrics by cluster</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>cluster_summary <span class="ot">&lt;-</span> cluster_data <span class="sc">%&gt;%</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(cluster) <span class="sc">%&gt;%</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarize</span>(</span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">avg_kills =</span> <span class="fu">mean</span>(kills, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">avg_assists =</span> <span class="fu">mean</span>(assists, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">avg_damageDealt =</span> <span class="fu">mean</span>(damageDealt, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">avg_timeSurvived =</span> <span class="fu">mean</span>(timeSurvived, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">avg_wins =</span> <span class="fu">mean</span>(wins, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a><span class="co"># View the summary</span></span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(cluster_summary)</span>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a><span class="do">## # A tibble: 4 × 6</span></span>
+<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a><span class="do">##   cluster avg_kills avg_assists avg_damageDealt avg_timeSurvived avg_wins</span></span>
+<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a><span class="do">##   &lt;fct&gt;       &lt;dbl&gt;       &lt;dbl&gt;           &lt;dbl&gt;            &lt;dbl&gt;    &lt;dbl&gt;</span></span>
+<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a><span class="do">## 1 1           2907.       826.          405750.         1630512.   128.  </span></span>
+<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a><span class="do">## 2 2            119.        27.1          16131.           70101.     4.08</span></span>
+<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a><span class="do">## 3 3          23655.      7292.         3195736.         9737638.  1034.  </span></span>
+<span id="cb3-22"><a href="#cb3-22" aria-hidden="true" tabindex="-1"></a><span class="do">## 4 4           8786.      2499.         1204401.         4388938.   395.</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <ul>
 <li><p><strong>Cluster 1</strong>: This cluster represents moderately skilled players with a good average performance. They achieve a high number of kills (8,785.91 on average) and assists (2,499.36), deal significant damage (1,204,401.24 on average), and survive for a considerable amount of time (438,938.02 on average). Their average win count (395.11) is also solid, reflecting consistent gameplay.</p></li>
@@ -201,7 +207,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <div class="cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><img src="FinalBlog_files/figure-html/unnamed-chunk-5-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img" data-fig-pos="h" width="408"></p>
+<p><img src="FinalBlog_files/figure-html/unnamed-chunk-5-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img" data-fig-pos="h" width="672"></p>
 </figure>
 </div>
 </div>
@@ -218,7 +224,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <div class="cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><img src="FinalBlog_files/figure-html/unnamed-chunk-6-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img" data-fig-pos="h" width="408"></p>
+<p><img src="FinalBlog_files/figure-html/unnamed-chunk-6-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img" data-fig-pos="h" width="672"></p>
 </figure>
 </div>
 </div>
@@ -226,6 +232,270 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <p>Tip number 1: Play the game for longer!!</p>
 <p>Based on the density plot above we can see the progression from beginner to elite players, with Cluster 3 being the least engaged and Cluster 2 being the most engaged in terms of days played. And therefore The number of days played correlates positively with skill level and performance, as clusters with more days (e.g., Cluster 2) exhibit higher performance stats. The more consistency and the longer you play the more experience and the better you become. It’s a no brainer!</p>
 <pre><code></code></pre>
+</section>
+<section id="seasonal-survival-statistics" class="level1">
+<h1>Seasonal Survival Statistics</h1>
+<p>Since we used lifetime statistics for the classification of player levels, it is important to qualitatively assess our model on a seasonal basis. This evaluation will help us determine whether the model is making accurate distinctions between player levels across different time periods. Specifically, we will analyze player survival performance by level across the six most recent seasons.</p>
+<p>In the context of survival games like PUBG, movement is one of the most critical skills for a player’s success. Effective movement not only enhances survival but also plays a pivotal role in strategic positioning, escaping threats, and securing advantageous locations.</p>
+<p>To capture this aspect in our analysis, we will primarily focus on <strong>average survival time</strong> as our dependent variable (y-axis). Average survival time, calculated as the total survival time divided by the number of rounds played, serves as a strong indicator of a player’s ability to stay alive during matches. On the other hand, the independent variables (x-axis) will consist of movement-related features such as <strong>average walking distance</strong>, <strong>riding distance</strong>, and <strong>swimming distance</strong>. These metrics provide insights into how players navigate the game world and adapt to different scenarios.</p>
+<p>By examining the relationships between these movement features and survival performance, we aim to identify patterns that differentiate player levels. This approach will also shed light on whether players at higher levels excel not just in combat but also in mobility—a fundamental survival skill in PUBG. Such an analysis will strengthen the understanding of our model’s decisions and its ability to classify players effectively based on meaningful gameplay attributes.</p>
+<section id="i.-quick-sense-check" class="level2">
+<h2 class="anchored" data-anchor-id="i.-quick-sense-check">I. Quick Sense Check</h2>
+<div class="cell" data-layout-align="center">
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>df_all_seasons <span class="sc">%&gt;%</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">avg =</span> wins<span class="sc">/</span>roundsPlayed) <span class="sc">%&gt;%</span> </span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>    <span class="fu">filter</span>(avg <span class="sc">&lt;</span> <span class="fl">0.5</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>    <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> <span class="fu">fct_rev</span>(<span class="fu">fct_reorder</span>(level, avg)), <span class="at">y =</span> avg))<span class="sc">+</span></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>    <span class="fu">geom_boxplot</span>()<span class="sc">+</span></span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>    <span class="fu">facet_wrap</span>(<span class="sc">~</span>season) <span class="sc">+</span></span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>    <span class="fu">theme_classic</span>() <span class="sc">+</span></span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>    <span class="fu">theme</span>(<span class="at">axis.text.x =</span> <span class="fu">element_text</span>(<span class="at">angle =</span> <span class="dv">45</span>, <span class="at">hjust =</span> <span class="dv">1</span>),</span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>          <span class="at">panel.grid.major.x =</span> <span class="fu">element_blank</span>())<span class="sc">+</span></span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a>    <span class="fu">labs</span>( <span class="at">y =</span> <span class="st">"win ratio"</span>,</span>
+<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a>          <span class="at">x =</span> <span class="st">""</span>,</span>
+<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a>          <span class="at">title =</span> <span class="st">"Boxplots of Win Ratio by Player Level Across Seasons"</span>,</span>
+<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a>          <span class="at">subtitle =</span> <span class="st">"*outliers have been removed from plot (&lt;0.5)"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="FinalBlog_files/figure-html/echo%20FALSE-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img" data-fig-pos="h" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<div class="cell" data-layout-align="center">
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="FinalBlog_files/figure-html/unnamed-chunk-7-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img" data-fig-pos="h" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>Observations:</p>
+<ul>
+<li><p>The ratio plots match our expectation in terms of player expertise, that is, pro and good players are shown to have higher win ratio medians whereas immediate and beginner players are on the lower end. In contrast, the beginners and intermediates observe higher loss ratios.</p></li>
+<li><p>Pro and good players are less likely to have outliers.</p></li>
+</ul>
+<div class="cell" data-layout-align="center">
+<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>df_all_seasons <span class="sc">%&gt;%</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">avg =</span> losses<span class="sc">/</span>roundsPlayed) <span class="sc">%&gt;%</span> </span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>    <span class="fu">filter</span>(avg <span class="sc">&gt;</span> <span class="fl">0.7</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>    <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> <span class="fu">fct_rev</span>(<span class="fu">fct_reorder</span>(level, avg)), <span class="at">y =</span> avg))<span class="sc">+</span></span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>    <span class="fu">geom_boxplot</span>()<span class="sc">+</span></span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>    <span class="fu">facet_wrap</span>(<span class="sc">~</span>season) <span class="sc">+</span></span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>    <span class="fu">theme_classic</span>()<span class="sc">+</span></span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>    <span class="fu">theme</span>(<span class="at">axis.text.x =</span> <span class="fu">element_text</span>(<span class="at">angle =</span> <span class="dv">45</span>, <span class="at">hjust =</span> <span class="dv">1</span>))<span class="sc">+</span></span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>    <span class="fu">labs</span>( <span class="at">y =</span> <span class="st">"loss ratio"</span>,</span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a>          <span class="at">x =</span> <span class="st">""</span>,</span>
+<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a>          <span class="at">title =</span> <span class="st">"Boxplots of Loss Ratio by Player Level Across Seasons"</span>,</span>
+<span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a>           <span class="at">subtitle =</span> <span class="st">"*outliers have been removed from plot (&gt;0.7)"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="FinalBlog_files/figure-html/unnamed-chunk-8-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img" data-fig-pos="h" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<ul>
+<li><p>Win ratios tend to be a lot smaller than loss ratios. This makes sense because winning a match tends to be harder than losing a match, even for skillful players.</p></li>
+<li><p>These trends stay consistently over the course of 6 seasons (each lasts for 2 months, so it remains almost static during the span of 1 year)</p></li>
+</ul>
+<p>Conclusion: It appears that our PCA model has successfully grouped players based on relevant indicators. The trends over the 6 seasons sync up with how we expect high level players to perform. Nonetheless, the boxplots also show that the “good” group outperforms the “excellent” group. Perhaps we will need to rethink how we classify the players during the earlier stage.</p>
+</section>
+<section id="ii.-dive-deep-into-survival-tactics" class="level2">
+<h2 class="anchored" data-anchor-id="ii.-dive-deep-into-survival-tactics">II. Dive deep into survival tactics</h2>
+<section id="ii.a.overall-data" class="level3">
+<h3 class="anchored" data-anchor-id="ii.a.overall-data">ii.a.Overall Data</h3>
+<div class="cell" data-layout-align="center">
+<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>df_all_seasons <span class="sc">%&gt;%</span> </span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">y =</span> timeSurvived<span class="sc">/</span>roundsPlayed, <span class="at">x =</span> rideDistance<span class="sc">/</span>roundsPlayed))<span class="sc">+</span></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>()<span class="sc">+</span></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_smooth</span>(<span class="at">method =</span> <span class="st">"lm"</span>)<span class="sc">+</span></span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">facet_wrap</span>(<span class="sc">~</span>season) <span class="sc">+</span></span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_classic</span>()<span class="sc">+</span></span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">y =</span> <span class="st">"Avg Time Survived per Round"</span>,</span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>       <span class="at">x =</span> <span class="st">"Avg Ride Distance per Round"</span>,</span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>       <span class="at">title =</span> <span class="st">"Plots Showing Correlation between Avg Time Survived and Avg Ride Distance"</span>,</span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>       <span class="at">subtitle =</span> <span class="st">"*ride distance means distance player traveled in a vehicle"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="FinalBlog_files/figure-html/unnamed-chunk-9-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img" data-fig-pos="h" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<div class="cell" data-layout-align="center">
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="FinalBlog_files/figure-html/unnamed-chunk-10-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img" data-fig-pos="h" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<div class="cell" data-layout-align="center">
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="FinalBlog_files/figure-html/unnamed-chunk-11-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img" data-fig-pos="h" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>Observations:</p>
+<ul>
+<li><p>Average walk and ride distances share the same positive correlation with avg survived time, although they do have different slopes: avg walk distance’s slope rises faster.</p></li>
+<li><p>Average swim distance seems to be independent of avg time survived. The trend lines shown in the plots are influenced by a few outliers</p></li>
+</ul>
+<p>Conclusions:</p>
+<ul>
+<li><p>The positive correlations mean if one is to survive longer, they will have to be on the move constantly. Within the context of PUGB, you will need to consistantly seek good places to hide or find your enemies and good angles to take them down with your weapon. Always moving also protects you in the sense that your enemies become oblivious to your whereabouts. Staying still at one place typically doesn’t help much.</p></li>
+<li><p>The slope of avg walk distance being higher compared to that of avg ride distance may mean that walking is more likely to increase your chance of survival, compared to riding a transportation mode. While riding helps you places faster, and shields you from incoming bullets, it also informs enemies within proximity of your presence. Once they know your presence but you do not know theirs, the chances of you being hunted down and eliminated are high.</p></li>
+<li><p>The apparent independence between swimming and surviving is also noticeable. For context, in a map, there will be bodies of water you will have to tread through. There is infrastructure such as bridges but there are usually enemy teams waiting there, ready to eliminate you at any moment, which we call camping. Swimming almost always takes longer time and you are unable to use weapons under water, which makes you vulnerable to someone on higher ground. Perhaps because of this, swimming more is shown to not correlate with surviving more.</p></li>
+</ul>
+</section>
+<section id="ii.b.drilled-down" class="level3">
+<h3 class="anchored" data-anchor-id="ii.b.drilled-down">ii.b.Drilled down</h3>
+<div class="cell" data-layout-align="center">
+<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>df_all_seasons <span class="sc">%&gt;%</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">avg =</span> rideDistance<span class="sc">/</span>roundsPlayed) <span class="sc">%&gt;%</span></span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>    <span class="fu">filter</span>(avg<span class="sc">&lt;</span><span class="dv">1000</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>    <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> <span class="fu">fct_rev</span>(<span class="fu">fct_reorder</span>(level, avg)), <span class="at">y =</span> avg))<span class="sc">+</span></span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>    <span class="fu">geom_boxplot</span>()<span class="sc">+</span></span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>    <span class="fu">facet_wrap</span>(<span class="sc">~</span>season) <span class="sc">+</span></span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>    <span class="fu">theme_classic</span>()<span class="sc">+</span></span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>    <span class="fu">theme</span>(<span class="at">axis.text.x =</span> <span class="fu">element_text</span>(<span class="at">angle =</span> <span class="dv">45</span>, <span class="at">hjust =</span> <span class="dv">1</span>))<span class="sc">+</span></span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a>    <span class="fu">labs</span>( <span class="at">y =</span> <span class="st">"Avg Ride Distance"</span>,</span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a>          <span class="at">x =</span> <span class="st">""</span>,</span>
+<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a>          <span class="at">title =</span> <span class="st">"Boxplots of Avg Ride Dist by Player Level Across Seasons"</span>,</span>
+<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a>           <span class="at">subtitle =</span> <span class="st">"*outliers have been removed from plot (&lt;1000)"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="FinalBlog_files/figure-html/unnamed-chunk-12-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img" data-fig-pos="h" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>Observation(s):</p>
+<ul>
+<li>Unlike the win/loss ration plots above, the trend isn’t as quite consistent, much of variation happens among the non-beginner groups. However, in general players with experience have a tendency to ride in a car.</li>
+</ul>
+<div class="cell" data-layout-align="center">
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="FinalBlog_files/figure-html/unnamed-chunk-13-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img" data-fig-pos="h" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>Observation:</p>
+<ul>
+<li>During the n-5th and n-6th seasons, it was clear beginners walked less than the other groups. However, during the most recent 4 seasons they seemed to catch up and to the point where they are pretty much indistinguishable from the more experienced groups</li>
+</ul>
+</section>
+</section>
+<section id="section" class="level2">
+<h2 class="anchored" data-anchor-id="section"></h2>
+<div class="cell" data-layout-align="center">
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="FinalBlog_files/figure-html/unnamed-chunk-14-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img" data-fig-pos="h" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>Observation(s):</p>
+<ul>
+<li><p>There does not seem to be any significant difference in the avg swim distance for different player levels. The trend stays almost identical for the last 4 seasons</p></li>
+<li><p>However, it is worth noting that there are far way more outliers for the less skilled groups (intermedite and beginners.</p></li>
+</ul>
+<p>Conclusion:</p>
+<ul>
+<li>Movement patterns are a useful indicator of experience, particularly for identifying trends like increased car usage among skilled players and the narrowing walking distance gap between beginners and experienced players.</li>
+</ul>
+<!-- -->
+<ul>
+<li><p>Swimming distance appears to have little discriminatory power for classifying player levels due to its uniformity across groups.</p></li>
+<li><p>The presence of more outliers in beginner and intermediate groups highlights their inconsistent gameplay, which could be a distinguishing factor when analyzing player skill levels.</p></li>
+</ul>
+</section>
+</section>
+<section id="seasonal-players-weapon-usage-statistic" class="level1">
+<h1>Seasonal Players’ Weapon Usage Statistic</h1>
+<p>Moreover, analyzing weapon mastery is crucial for understanding how players of different game play proficiency utilize different weapons to maximize their performance and adapt to various combat scenarios. It highlights trends in weapon preferences across skill levels, providing insights into player progression and game play strategies. For players, this analysis offers guidance on optimal weapon choices to enhance their skills, while for developers, it reveals opportunities to balance weapon attributes, improve game mechanics, and boost player engagement.</p>
+<section id="i.-ultra-super-simplified-weaponry-analysis" class="level2">
+<h2 class="anchored" data-anchor-id="i.-ultra-super-simplified-weaponry-analysis">I. Ultra Super Simplified Weaponry Analysis</h2>
+<p>The distribution of weapon preferences highlights distinct trends that correlate with the skill and engagement levels of the players in each group. Below is a detailed breakdown of the observations and insights for each cluster:</p>
+<p><img src="weapViz1.png" class="img-fluid"></p>
+<ul>
+<li>Cluster 1 (Higher Performers):</li>
+</ul>
+<p>There is a noticeable preference for versatile and reliable weapons such as the HK416 and Beryl M762. This suggests that higher performers rely on weapons that balance damage, stability, and versatility, which are essential for adapting to dynamic combat situations.</p>
+<ul>
+<li>Cluster 2 (Elite Performers):</li>
+</ul>
+<p>The chart indicates that elite players have an overwhelming preference for the <strong>HK416</strong>, which dominates the weapon usage by total kills in this cluster. This supports the idea that elite players optimize their loadouts with reliable and versatile high-tier weapons to maintain their competitive edge.</p>
+<p>The elite performers show a heavy reliance on high-tier weapons such as the HK416, which stands out as the the weapon with the highest number of kills in this cluster as well as for the higher performers in cluster 1. The dominance of this high-performing weapons reflects the skill and precision of these players, who optimize their loadout to maximize their combat efficiency. The significantly higher total kills that were accumulated across the season and players also indicate that elite players are highly effective in engagements while also prioritizing consistent, high-damage outputs.</p>
+<ul>
+<li>Cluster 3 (Beginners):</li>
+</ul>
+<p>Beginner players demonstrate a more scattered distribution of weapon usage, but a clear preference for accessible and easy-to-use options like the AKM and Beryl M762. This could reflect a lack of familiarity with more advanced weapons or a tendency to rely on common loot during gameplay. The lower total kills suggest that beginners are less effective in leveraging weapon capabilities to secure eliminations.</p>
+<ul>
+<li>Cluster 4 (Intermediate Performers):</li>
+</ul>
+<p>Intermediate players show a gradual shift toward using advanced weapons such as the HK416, similar to the higher and elite clusters. However, their distribution still includes a mix of beginner-friendly and advanced options, indicating a transition phase in skill development and gameplay strategy.</p>
+<section id="i.a.-pattern-analysis" class="level3">
+<h3 class="anchored" data-anchor-id="i.a.-pattern-analysis">i.a. Pattern Analysis</h3>
+<p><strong><em>HK416</em></strong></p>
+<p>Advanced clusters (1 and 2) gravitate toward high-performing weapons like the HK416, reflecting their expertise and preference for weapons that provide consistent performance</p>
+<p><strong><em>Transition into the higher level</em></strong></p>
+<p>Intermediate players (Cluster 4) are starting to adopt weapons preferred by higher-level players, signaling progress in their mastery and understanding of game mechanics.</p>
+<p><strong><em>Beginner Adaptation</em></strong></p>
+<p>Cluster 3 players primarily use simpler weapons, which aligns with their gameplay focus on ease of use rather than optimization.</p>
+</section>
+<section id="i.b.-choosing-a-weapon" class="level3">
+<h3 class="anchored" data-anchor-id="i.b.-choosing-a-weapon">i.b. Choosing a Weapon</h3>
+<p><strong><em>For Beginners:</em></strong></p>
+<p>Focus on mastering beginner-friendly weapons such as the AKM or Beryl M762, which provide a balance of power and accessibility.</p>
+<p><strong><em>For Intermediates:</em></strong></p>
+<p>Experiment with advanced weapons like the HK416 to improve precision and adaptability in combat situations.</p>
+<p><strong><em>For Higher &amp; Elite Players:</em></strong></p>
+<p>Continue refining weapon-specific strategies and explore underutilized options to gain an edge in specific scenarios.</p>
+<p>This weapon mastery analysis not only highlights the importance of weapon selection but also emphasizes its connection to player progression and skill development in PUBG. By understanding these trends, players can make informed decisions to enhance their performance, while game developers can identify opportunities to balance weapon features and improve overall game-play experience.</p>
+</section>
+</section>
+<section id="ii.-general-weapon-effectiveness-by-longest-kills" class="level2">
+<h2 class="anchored" data-anchor-id="ii.-general-weapon-effectiveness-by-longest-kills">II. General Weapon Effectiveness by Longest Kills</h2>
+<p>Now, below is a heatmap which <em>aesthetically</em> displays the <strong>average longest kills</strong> achieved using various weapons across different player clusters. This metric provides insight into the players’ proficiency with specific weapons, particularly in scenarios that require <strong>precision and effective range</strong>.</p>
+<p><img src="weapViz3.png" class="img-fluid"></p>
+<section id="ii.a.-cluster-pattern-observations" class="level3">
+<h3 class="anchored" data-anchor-id="ii.a.-cluster-pattern-observations">ii.a. Cluster Pattern Observations</h3>
+<p><em><strong>Higher Performers (1)</strong>:</em></p>
+<p>Cluster 1 exhibits a relatively high values for long-range weapons, but their average longest kills are slightly lower than those in Cluster 2. Players here appear to have good accuracy and proficiency but may not fully leverage sniper rifles or long-range tactics as frequently as elite players.</p>
+<p><em><strong>Elite Players (2)</strong>:</em></p>
+<p>Cluster 2 shows the <strong>highest average longest kills</strong> across several weapons, particularly long-range weapons like the <strong>M24</strong>, <strong>Kar98k</strong>, and <strong>MK12</strong>. This highlights their expertise in precision shooting and long-range engagements, a key characteristic of elite players. The use of high-tier sniper rifles suggests mastery in weapon handling and map awareness, enabling them to capitalize on long-distance kills.</p>
+<p><em><strong>Beginners (3)</strong>:</em></p>
+<p>Cluster 3 players consistently show the <strong>lowest average longest kills</strong> across all weapons. This is indicative of limited experience and skill in long-range combat, likely due to less familiarity with snipers and less confidence in engaging from a distance.</p>
+<p><strong><em>Intermediate Players (4):</em></strong></p>
+<p>Cluster 4 demonstrates moderate values for longest kills. While they use a mix of long-range and mid-range weapons, their ability to achieve long kills is still developing. The transition to long-range precision engagements is evident, suggesting they are improving but lack the consistency of higher clusters.</p>
+</section>
+<section id="ii.b.-weapon-insights" class="level3">
+<h3 class="anchored" data-anchor-id="ii.b.-weapon-insights">ii.b. Weapon Insights</h3>
+<p><em><strong>Sniper Rifles (e.g., M24, Kar98k, MK12)</strong>:</em></p>
+<p>These weapons dominate the longest kill averages in Clusters 1 and 2, emphasizing their role in high-skill gameplay.</p>
+<p>Beginners and intermediates (Clusters 3 and 4) use them less effectively, possibly due to the learning curve associated with these weapons.</p>
+<p><em><strong>Assault Rifles (e.g., HK416, SCAR-L)</strong>:</em></p>
+<p>These weapons exhibit moderate performance in longest kills, especially for intermediate and beginner players. They are versatile but not optimized for long-range engagements.</p>
+<p><em><strong>Utility Weapons (e.g., Crossbow, PanzerFaust100M)</strong>:</em></p>
+<p>These weapons show low average longest kills across all clusters, reflecting their situational use and limited utility for long-range combat.</p>
+</section>
+</section>
 </section>
 
 </main>
@@ -265,18 +535,7 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
     }
     return false;
   }
-  const clipboard = new window.ClipboardJS('.code-copy-button', {
-    text: function(trigger) {
-      const codeEl = trigger.previousElementSibling.cloneNode(true);
-      for (const childEl of codeEl.children) {
-        if (isCodeAnnotation(childEl)) {
-          childEl.remove();
-        }
-      }
-      return codeEl.innerText;
-    }
-  });
-  clipboard.on('success', function(e) {
+  const onCopySuccess = function(e) {
     // button target
     const button = e.trigger;
     // don't keep focus
@@ -308,7 +567,29 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
     }, 1000);
     // clear code selection
     e.clearSelection();
+  }
+  const getTextToCopy = function(trigger) {
+      const codeEl = trigger.previousElementSibling.cloneNode(true);
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+  }
+  const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+    text: getTextToCopy
   });
+  clipboard.on('success', onCopySuccess);
+  if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+    // For code content inside modals, clipBoardJS needs to be initialized with a container option
+    // TODO: Check when it could be a function (https://github.com/zenorocha/clipboard.js/issues/860)
+    const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+      text: getTextToCopy,
+      container: window.document.getElementById('quarto-embedded-source-code-modal')
+    });
+    clipboardModal.on('success', onCopySuccess);
+  }
     var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
     var mailtoRegex = new RegExp(/^mailto:/);
       var filterRegex = new RegExp('/' + window.location.host + '/');
@@ -316,7 +597,7 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
         return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
     }
     // Inspect non-navigation links and adorn them if external
- 	var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool)');
+ 	var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
     for (var i=0; i<links.length; i++) {
       const link = links[i];
       if (!isInternal(link.href)) {

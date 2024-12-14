@@ -364,9 +364,106 @@ Conclusion:
 
 -   Movement patterns are a useful indicator of experience, particularly for identifying trends like increased car usage among skilled players and the narrowing walking distance gap between beginners and experienced players.
 
-```{=html}
 <!-- -->
-```
+
 -   Swimming distance appears to have little discriminatory power for classifying player levels due to its uniformity across groups.
 
 -   The presence of more outliers in beginner and intermediate groups highlights their inconsistent gameplay, which could be a distinguishing factor when analyzing player skill levels.
+
+# Seasonal Players' Weapon Usage Statistic
+
+Moreover, analyzing weapon mastery is crucial for understanding how players of different game play proficiency utilize different weapons to maximize their performance and adapt to various combat scenarios. It highlights trends in weapon preferences across skill levels, providing insights into player progression and game play strategies. For players, this analysis offers guidance on optimal weapon choices to enhance their skills, while for developers, it reveals opportunities to balance weapon attributes, improve game mechanics, and boost player engagement.
+
+## I. Ultra Super Simplified Weaponry Analysis
+
+The distribution of weapon preferences highlights distinct trends that correlate with the skill and engagement levels of the players in each group. Below is a detailed breakdown of the observations and insights for each cluster:
+
+![](weapViz1.png)
+
+-   Cluster 1 (Higher Performers):
+
+There is a noticeable preference for versatile and reliable weapons such as the HK416 and Beryl M762. This suggests that higher performers rely on weapons that balance damage, stability, and versatility, which are essential for adapting to dynamic combat situations.
+
+-   Cluster 2 (Elite Performers):
+
+The chart indicates that elite players have an overwhelming preference for the **HK416**, which dominates the weapon usage by total kills in this cluster. This supports the idea that elite players optimize their loadouts with reliable and versatile high-tier weapons to maintain their competitive edge.
+
+The elite performers show a heavy reliance on high-tier weapons such as the HK416, which stands out as the the weapon with the highest number of kills in this cluster as well as for the higher performers in cluster 1. The dominance of this high-performing weapons reflects the skill and precision of these players, who optimize their loadout to maximize their combat efficiency. The significantly higher total kills that were accumulated across the season and players also indicate that elite players are highly effective in engagements while also prioritizing consistent, high-damage outputs.
+
+-   Cluster 3 (Beginners):
+
+Beginner players demonstrate a more scattered distribution of weapon usage, but a clear preference for accessible and easy-to-use options like the AKM and Beryl M762. This could reflect a lack of familiarity with more advanced weapons or a tendency to rely on common loot during gameplay. The lower total kills suggest that beginners are less effective in leveraging weapon capabilities to secure eliminations.
+
+-   Cluster 4 (Intermediate Performers):
+
+Intermediate players show a gradual shift toward using advanced weapons such as the HK416, similar to the higher and elite clusters. However, their distribution still includes a mix of beginner-friendly and advanced options, indicating a transition phase in skill development and gameplay strategy.
+
+### i.a. Pattern Analysis
+
+***HK416***
+
+Advanced clusters (1 and 2) gravitate toward high-performing weapons like the HK416, reflecting their expertise and preference for weapons that provide consistent performance
+
+***Transition into the higher level***
+
+Intermediate players (Cluster 4) are starting to adopt weapons preferred by higher-level players, signaling progress in their mastery and understanding of game mechanics.
+
+***Beginner Adaptation***
+
+Cluster 3 players primarily use simpler weapons, which aligns with their gameplay focus on ease of use rather than optimization.
+
+### i.b. Choosing a Weapon
+
+***For Beginners:***
+
+Focus on mastering beginner-friendly weapons such as the AKM or Beryl M762, which provide a balance of power and accessibility.
+
+***For Intermediates:***
+
+Experiment with advanced weapons like the HK416 to improve precision and adaptability in combat situations.
+
+***For Higher & Elite Players:***
+
+Continue refining weapon-specific strategies and explore underutilized options to gain an edge in specific scenarios.
+
+This weapon mastery analysis not only highlights the importance of weapon selection but also emphasizes its connection to player progression and skill development in PUBG. By understanding these trends, players can make informed decisions to enhance their performance, while game developers can identify opportunities to balance weapon features and improve overall game-play experience.
+
+## II. General Weapon Effectiveness by Longest Kills
+
+Now, below is a heatmap which *aesthetically* displays the **average longest kills** achieved using various weapons across different player clusters. This metric provides insight into the players' proficiency with specific weapons, particularly in scenarios that require **precision and effective range**.
+
+![](weapViz3.png)
+
+### ii.a. Cluster Pattern Observations
+
+***Higher Performers (1)**:*
+
+Cluster 1 exhibits a relatively high values for long-range weapons, but their average longest kills are slightly lower than those in Cluster 2. Players here appear to have good accuracy and proficiency but may not fully leverage sniper rifles or long-range tactics as frequently as elite players.
+
+***Elite Players (2)**:*
+
+Cluster 2 shows the **highest average longest kills** across several weapons, particularly long-range weapons like the **M24**, **Kar98k**, and **MK12**. This highlights their expertise in precision shooting and long-range engagements, a key characteristic of elite players. The use of high-tier sniper rifles suggests mastery in weapon handling and map awareness, enabling them to capitalize on long-distance kills.
+
+***Beginners (3)**:*
+
+Cluster 3 players consistently show the **lowest average longest kills** across all weapons. This is indicative of limited experience and skill in long-range combat, likely due to less familiarity with snipers and less confidence in engaging from a distance.
+
+***Intermediate Players (4):***
+
+Cluster 4 demonstrates moderate values for longest kills. While they use a mix of long-range and mid-range weapons, their ability to achieve long kills is still developing. The transition to long-range precision engagements is evident, suggesting they are improving but lack the consistency of higher clusters.
+
+### ii.b. Weapon Insights
+
+***Sniper Rifles (e.g., M24, Kar98k, MK12)**:*
+
+These weapons dominate the longest kill averages in Clusters 1 and 2, emphasizing their role in high-skill gameplay.
+
+Beginners and intermediates (Clusters 3 and 4) use them less effectively, possibly due to the learning curve associated with these weapons.
+
+***Assault Rifles (e.g., HK416, SCAR-L)**:*
+
+These weapons exhibit moderate performance in longest kills, especially for intermediate and beginner players. They are versatile but not optimized for long-range engagements.
+
+***Utility Weapons (e.g., Crossbow, PanzerFaust100M)**:*
+
+These weapons show low average longest kills across all clusters, reflecting their situational use and limited utility for long-range combat.

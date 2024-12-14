@@ -19,7 +19,7 @@ library(jsonlite)
 ## Player IDs
 
 ```{r}
-# setwd("~/Desktop/Stat212_Project1/code")
+# setwd("~/Desktop/COMP_STAT_212/project/Stat212_Project1/code")
 playerID <- read_csv("../clustered_players.csv")
 playerID <- playerID %>%
   select(cluster, accountId, playerName) %>%
@@ -31,7 +31,7 @@ playerID <- playerID %>%
 ### API key
 
 ```{r}
-api_key <- "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJqdGkiOiI0ZTNlOGE0MC03N2IxLTAxM2QtNWRjNy0xYWNkNDhkZWFmNTAiLCJpc3MiOiJnYW1lbG9ja2VyIiwiaWF0IjoxNzMwMTU3Njk4LCJwdWIiOiJibHVlaG9sZSIsInRpdGxlIjoicHViZyIsImFwcCI6InN0YXQyMTIifQ.T8ZFS6OssVUPJRwU8I-l5-tokA3TZGCov7NnYNPOnP8"
+api_key <- "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJqdGkiOiJhOGVkYjBkMC03N2IxLTAxM2QtNjI3Mi0xNjVmNmJlZjNhYmMiLCJpc3MiOiJnYW1lbG9ja2VyIiwiaWF0IjoxNzMwMTU3ODUwLCJwdWIiOiJibHVlaG9sZSIsInRpdGxlIjoicHViZyIsImFwcCI6InN0YXRzcHJvamVjdCJ9.TGpk6uvZJH4x7A5MsrZuWKSBHw4mkoPp1nYcPqYjKEg"
 ```
 
 ### API call
@@ -143,54 +143,66 @@ sampleWeaponsDF$weapon <- gsub("Item_Weapon_", "", sampleWeaponsDF$weapon) %>%
 
 ### Function
 
-```{r, eval=FALSE}
-# Function to get weapons mastery for all players in the playerID list and compile as a list of dataframes
-urls <- paste("https://api.pubg.com/shards/steam/players/",playerID$accountId,"/weapon_mastery", sep = "")
-
-# calling all the data wrangling functions from above
-weapon_data <- function(url,api_key){
-  orig <- get_info(url,api_key)
-  # wrangle
-  # return as a row in a data set 
-}
-
-
-# batch_weapons <- map(urls, weapon_data, api_key)
-```
-
 ```{r}
-# Function to clean weapons mastery data for each players
-clean_weapons_data <- function(playerWeapons) {
-  playerWeaponsDF <- map(playerWeapons, ~{
-    playerWeaponSumm <- as_tibble(.x$data$attributes$weaponSummaries)
-    weaponNames <- names(playerWeaponSumm)
+get_all_weapons_mastery <- function(playerID, api_key) {
+  # Create empty list to store results
+  all_weapons_data <- list()
+  
+  # Loop through each player
+  for(i in seq_along(playerID$accountId)) {
+    # Print progress
+    cat("Processing player", i, "of", nrow(playerID), "\n")
     
-    playerWeaponsDF <- map2_dfr(weaponNames, playerWeaponSumm, ~{
-      weapon_data <- as.data.frame(t(.y))
-      weapon_data$weapon <- .x
-      return(weapon_data)
+    # Get weapon mastery data
+    url <- paste0("https://api.pubg.com/shards/steam/players/", 
+                 playerID$accountId[i], 
+                 "/weapon_mastery")
+    
+    weaponsMastery <- get_info(url, api_key)
+    
+    # Skip if API call failed
+    if(is.null(weaponsMastery)) {
+      next
+    }
+    
+    # Process weapon summary
+    weaponsSumm <- as_tibble(weaponsMastery$data$attributes$weaponSummaries)
+    weaponsNames <- names(weaponsSumm)
+    
+    # Create weapons dataframe
+    weaponsDF <- map2_dfr(weaponsNames, weaponsSumm, ~{
+      weapons <- as.data.frame(t(.y))
+      weapons$weapon <- .x
+      return(weapons)
     })
     
-    StatsDF <- flatten_stats_total(playerWeaponsDF$StatsTotal)
-    OfficialStatsDF <- flatten_stats_total(playerWeaponsDF$OfficialStatsTotal)
-    CompetitiveStatsDF <- flatten_stats_total(playerWeaponsDF$CompetitiveStatsTotal)
+    # Flatten stats
+    flattenStats <- function(stats_list) {
+      map_dfr(stats_list, ~ as.data.frame(t(unlist(.x)), stringsAsFactors = FALSE))
+    }
     
-    playerWeaponsDF <- playerWeaponsDF %>%
+    statsData <- flattenStats(weaponsDF$StatsTotal)
+    officialStatsData <- flattenStats(weaponsDF$OfficialStatsTotal)
+    competitiveStatsData <- flattenStats(weaponsDF$CompetitiveStatsTotal)
+    
+    weaponsDF <- weaponsDF %>%
       select(-StatsTotal) %>%
       select(-OfficialStatsTotal) %>%
       select(-CompetitiveStatsTotal) %>%
-      bind_cols(StatsDF) %>%
-      bind_cols(OfficialStatsDF) %>%
-      bind_cols(CompetitiveStatsDF)
+      bind_cols(statsData) %>%
+      bind_cols(officialStatsData) %>%
+      bind_cols(competitiveStatsData)
     
-    colnames(playerWeaponsDF) <- gsub("\\.\\.\\.\\d+$", "", colnames(playerWeaponsDF))
+    # Clean column names
+    colnames(weaponsDF) <- gsub("\\.\\.\\.\\d+$", "", colnames(weaponsDF))
     
-    unique_names <- unique(colnames(playerWeaponsDF))
+    # Average duplicate columns
+    unique_names <- unique(colnames(weaponsDF))
     
-    playerWeaponsDF_cleaned <- unique_names %>%
+    weaponsDF <- unique_names %>%
       map_dfc(~ {
-        cols <- select(playerWeaponsDF, all_of(.x))
-        cols <- cols %>% mutate(across(everything(), as.numeric, .names = "converted_{.col}")) 
+        cols <- select(weaponsDF, all_of(.x))
+        cols <- cols %>% mutate(across(everything(), as.numeric, .names = "converted_{.col}"))
         if (all(sapply(cols, is.numeric))) {
           tibble(!!sym(.x) := rowMeans(cols, na.rm = TRUE))
         } else {
@@ -198,40 +210,349 @@ clean_weapons_data <- function(playerWeapons) {
         }
       })
     
-    playerWeaponsDF_cleaned <- playerWeaponsDF_cleaned %>%
+    # Final cleaning
+    weaponsDF <- weaponsDF %>%
       select(-Medals)
     
-    playerWeaponsDF_cleaned$weapon <- gsub("Item_Weapon_", "", playerWeaponsDF_cleaned$weapon) %>%
+    weaponsDF$weapon <- gsub("Item_Weapon_", "", weaponsDF$weapon) %>%
       gsub("_C", "", .)
     
-    return(playerWeaponsDF_cleaned)
-  })
+    # Add player information
+    weaponsDF$accountId <- playerID$accountId[i]
+    weaponsDF$playerName <- playerID$playerName[i]
+    weaponsDF$cluster <- playerID$cluster[i]
+    
+    # Store in list
+    all_weapons_data[[i]] <- weaponsDF
+  }
   
-  return(playerWeaponsDF)
+  # Combine all data frames
+  final_df <- bind_rows(all_weapons_data)
+  
+  return(final_df)
 }
 
-# Get all players weapons mastery
-# allPlayersWeapons <- get_all_players_weapons(playerID, api_key) %>%
-#   clean_weapons_data()
+# Use the function
+all_players_weapons <- get_all_weapons_mastery(playerID, api_key)
+```
+
+```{r}
+get_all_weapons_mastery <- function(playerID, api_key, start_index = 4700) {
+  # Create empty list to store results
+  all_weapons_data <- list()
+  
+  Sys.sleep(60)
+  # Loop through each player starting from start_index
+  for(i in start_index:nrow(playerID)) {
+    # Print progress
+    cat("Processing player", i, "of", nrow(playerID), "\n")
+    
+    # Get weapon mastery data
+    url <- paste0("https://api.pubg.com/shards/steam/players/", 
+                 playerID$accountId[i], 
+                 "/weapon_mastery")
+    
+    weaponsMastery <- get_info(url, api_key)
+    
+    # Skip if API call failed
+    if(is.null(weaponsMastery)) {
+      cat("Skipping player", i, "- API call failed\n")
+      next
+    }
+    
+    # Process weapon summary
+    weaponsSumm <- as_tibble(weaponsMastery$data$attributes$weaponSummaries)
+    weaponsNames <- names(weaponsSumm)
+    
+    # Create weapons df
+    weaponsDF <- map2_dfr(weaponsNames, weaponsSumm, ~{
+      weapons <- as.data.frame(t(.y))
+      weapons$weapon <- .x
+      return(weapons)
+    })
+    
+    # Print column names for debugging
+    cat("Column names in weaponsDF:\n")
+    print(colnames(weaponsDF))
+    
+    # Check if stats columns exist
+    stats_cols <- c("StatsTotal", "OfficialStatsTotal", "CompetitiveStatsTotal")
+    existing_stats_cols <- stats_cols[stats_cols %in% colnames(weaponsDF)]
+    
+    # Flatten stats only if columns exist
+    if(length(existing_stats_cols) > 0) {
+      flattenStats <- function(stats_list) {
+        map_dfr(stats_list, ~ as.data.frame(t(unlist(.x)), stringsAsFactors = FALSE))
+      }
+      
+      # Process each existing stats
+      for(col in existing_stats_cols) {
+        if(col == "StatsTotal" && "StatsTotal" %in% colnames(weaponsDF)) {
+          statsData <- flattenStats(weaponsDF$StatsTotal)
+          weaponsDF <- weaponsDF %>% bind_cols(statsData)
+        }
+        if(col == "OfficialStatsTotal" && "OfficialStatsTotal" %in% colnames(weaponsDF)) {
+          officialStatsData <- flattenStats(weaponsDF$OfficialStatsTotal)
+          weaponsDF <- weaponsDF %>% bind_cols(officialStatsData)
+        }
+        if(col == "CompetitiveStatsTotal" && "CompetitiveStatsTotal" %in% colnames(weaponsDF)) {
+          competitiveStatsData <- flattenStats(weaponsDF$CompetitiveStatsTotal)
+          weaponsDF <- weaponsDF %>% bind_cols(competitiveStatsData)
+        }
+      }
+      
+      # Remove the original stats columns
+      weaponsDF <- weaponsDF %>%
+        select(-any_of(existing_stats_cols))
+    }
+    
+    # Clean
+    colnames(weaponsDF) <- gsub("\\.\\.\\.\\d+$", "", colnames(weaponsDF))
+    
+    # Average duplicate columns
+    unique_names <- unique(colnames(weaponsDF))
+    
+    weaponsDF <- unique_names %>%
+      map_dfc(~ {
+        cols <- select(weaponsDF, all_of(.x))
+        cols <- cols %>% mutate(across(everything(), as.numeric, .names = "converted_{.col}"))
+        if (all(sapply(cols, is.numeric))) {
+          tibble(!!sym(.x) := rowMeans(cols, na.rm = TRUE))
+        } else {
+          tibble(!!sym(.x) := cols[[1]])
+        }
+      })
+    
+    # Clean
+    weaponsDF <- weaponsDF %>%
+      select(-any_of("Medals"))
+    
+    weaponsDF$weapon <- gsub("Item_Weapon_", "", weaponsDF$weapon) %>%
+      gsub("_C", "", .)
+    
+    # Player info
+    weaponsDF$accountId <- playerID$accountId[i]
+    weaponsDF$playerName <- playerID$playerName[i]
+    weaponsDF$cluster <- playerID$cluster[i]
+    
+    # Store in list
+    all_weapons_data[[length(all_weapons_data) + 1]] <- weaponsDF
+    
+    # Save csv for every 50 players
+    if(i %% 50 == 0) {
+      temp_df <- bind_rows(all_weapons_data)
+      write_csv(temp_df, paste0("weapons_mastery_backup_", i, ".csv"))
+      cat("Progress saved at player", i, "\n")
+    }
+  }
+  
+  # Combine all df
+  final_df <- bind_rows(all_weapons_data)
+  
+  return(final_df)
+}
+
+# Use the function starting from player 4700
+remaining_players_weapons <- get_all_weapons_mastery(playerID, api_key, start_index = 4700)
 ```
 
 ### All players' weapons mastery data combined
 
+```{r}
+data1 <- read_csv("weaponsPt1.csv")
+data2 <- read_csv("weaponsPt2.csv")
+Data <- bind_rows(data1, data2)
+head(Data)
+```
+
+```{r}
+highPerformers1 <- Data %>%
+  filter(cluster == 1) %>%
+  group_by(accountId) %>% 
+  filter(Kills == max(Kills)) %>% 
+  slice(1) %>% 
+  ungroup() %>% 
+  select(accountId, playerName, weapon, Kills)
+
+weaponPop1 <- highPerformers1 %>%
+  group_by(weapon) %>%
+  summarise(weaponCount = n(),
+            totalKills = sum(Kills, na.rm = TRUE)) %>%
+  ungroup()
+```
+
+```{r}
+elitePerformers2 <- Data %>%
+  filter(cluster == 2) %>%
+  group_by(accountId) %>% 
+  filter(Kills == max(Kills)) %>% 
+  slice(1) %>% 
+  ungroup() %>% 
+  select(accountId, playerName, weapon, Kills)
+
+weaponPop2 <- elitePerformers2 %>%
+  group_by(weapon) %>%
+  summarise(weaponCount = n(),
+            totalKills = sum(Kills, na.rm = TRUE)) %>%
+  ungroup()
+```
+
+```{r}
+beginners3 <- Data %>%
+  filter(cluster == 3) %>%
+  group_by(accountId) %>% 
+  filter(Kills == max(Kills)) %>% 
+  slice(1) %>% 
+  ungroup() %>% 
+  select(accountId, playerName, weapon, Kills)
+
+weaponPop3 <- beginners3 %>%
+  group_by(weapon) %>%
+  summarise(weaponCount = n(),
+            totalKills = sum(Kills, na.rm = TRUE)) %>%
+  ungroup()
+```
+
+```{r}
+intermediatePerf4 <- Data %>%
+  filter(cluster == 4) %>%
+  group_by(accountId) %>% 
+  filter(Kills == max(Kills)) %>% 
+  slice(1) %>% 
+  ungroup() %>% 
+  select(accountId, playerName, weapon, Kills)
+
+weaponPop4 <- intermediatePerf4 %>%
+  group_by(weapon) %>%
+  summarise(weaponCount = n(),
+            totalKills = sum(Kills, na.rm = TRUE)) %>%
+  ungroup()
+```
+
 ## Data viz
 
-```{r, eval=FALSE}
-library(ggplot2)
-library(gapminder)
-theme_set(theme_bw())
+```{r}
+combined_weapon_data <- bind_rows(
+  mutate(weaponPop1, Cluster = 1),
+  mutate(weaponPop2, Cluster = 2),
+  mutate(weaponPop3, Cluster = 3),
+  mutate(weaponPop4, Cluster = 4)
+)
 
-allPlayersWeaponsDF %>%
-  ggplot(aes(x = weapon, y = converted_Kills, fill = playerID)) +
-  geom_bar(stat = "identity", position = "dodge") +
-  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
-  labs(title = "Average Kills per Weapon Mastery",
-       x = "Weapon",
-       y = "Average Kills",
-       fill = "Player ID")
+# A faceted plot visualizing the highest-level weapons per cluster
+weapon_plot <- ggplot(combined_weapon_data, aes(x = reorder(weapon, totalKills), y = totalKills, fill = factor(Cluster))) +
+  scale_fill_brewer(palette = "Set2") +
+  geom_bar(stat = "identity") +
+  facet_wrap(~ Cluster, scales = "free_y") +
+  labs(
+    title = "Weapon Popularity (by Total Kills) per Cluster",
+    x = "Weapon",
+    y = "Total Kills",
+    fill = "Cluster"
+  ) +
+  theme_minimal() +
+  theme(
+    strip.text = element_text(size = 12, face = "bold"),
+    axis.text = element_text(size = 10),
+    axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1),
+    axis.title = element_text(size = 12),
+    legend.position = "bottom"
+  )
+
+print(weapon_plot)
 ```
+
+```{r}
+# Load necessary libraries
+library(ggplot2)
+library(dplyr)
+library(tidyr)
+
+# Assuming `weapon_data` is your dataset
+# Replace the column names below with actual column names from your dataset
+# Columns assumed: 'Cluster', 'Weapon', 'Level', 'Category', 'Kills'
+
+# Data Preparation: Aggregate total kills by weapon and cluster
+weapon_kills_summary <- Data %>%
+  group_by(cluster, weapon) %>%
+  summarise(totalKills = sum(Kills, na.rm = TRUE)) %>%
+  ungroup()
+
+weapon_kills_summary$cluster <- as.factor(weapon_kills_summary$cluster)
+
+# Create a bubble plot to visualize weapon popularity and effectiveness
+bubble_plot <- ggplot(weapon_kills_summary, aes(x = cluster, y = reorder(weapon, totalKills), size = totalKills, color = cluster)) +
+  geom_point(alpha = 0.3) +
+  scale_size(range = c(3, 15)) + # Adjust bubble size range
+  scale_color_brewer(palette = "Dark2") + # Prettier color palette
+  labs(
+    title = "Weapon Effectiveness by Cluster",
+    x = "Cluster",
+    y = "Weapon",
+    size = "Total Kills",
+    color = "Cluster"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(size = 10),
+    axis.text.y = element_text(size = 6),
+    axis.title = element_text(size = 12),
+    legend.position = "right"
+  )
+
+# Display the bubble plot
+print(bubble_plot)
+```
+
+```{r}
+# Load necessary libraries
+library(ggplot2)
+library(dplyr)
+library(tidyr)
+
+# Data Preparation: Calculate average Kills by weapon and cluster
+heatmap_data <- Data %>%
+  group_by(cluster, weapon) %>%
+  summarise(avgLongestKills = mean(LongestKill, na.rm = TRUE)) %>%
+  ungroup()
+
+# Convert cluster to a factor for better labeling
+heatmap_data$cluster <- as.factor(heatmap_data$cluster)
+
+# Create a heatmap to visualize average kills by weapon and cluster
+heatmap_plot <- ggplot(heatmap_data, aes(x = cluster, y = reorder(weapon, avgLongestKills), fill = avgLongestKills)) +
+  geom_tile(color = "white") +
+  scale_fill_gradient(low = "skyblue", high = "hotpink", name = "Avg Longest Kills") +
+  labs(
+    title = "Average Longest Kills per Weapon by Cluster",
+    x = "Cluster",
+    y = "Weapon"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(size = 10, angle = 45, hjust = 1),
+    axis.text.y = element_text(size = 5.5),
+    axis.title = element_text(size = 12),
+    legend.position = "right"
+  )
+
+# Display the heatmap plot
+print(heatmap_plot)
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
