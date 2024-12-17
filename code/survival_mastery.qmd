@@ -409,9 +409,8 @@ Conclusion:
 
 -   Movement patterns are a useful indicator of experience, particularly for identifying trends like increased car usage among skilled players and the narrowing walking distance gap between beginners and experienced players.
 
-```{=html}
 <!-- -->
-```
+
 -   Swimming distance appears to have little discriminatory power for classifying player levels due to its uniformity across groups.
 
 -   The presence of more outliers in beginner and intermediate groups highlights their inconsistent gameplay, which could be a distinguishing factor when analyzing player skill levels.
